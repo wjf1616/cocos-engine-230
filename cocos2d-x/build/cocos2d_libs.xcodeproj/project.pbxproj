@@ -844,6 +844,10 @@
 		294D7D9B1D0E93A2002CE7B7 /* CCDevice-apple.h in Headers */ = {isa = PBXBuildFile; fileRef = 294D7D981D0E93A2002CE7B7 /* CCDevice-apple.h */; };
 		294D7D9C1D0E93A2002CE7B7 /* CCDevice-apple.mm in Sources */ = {isa = PBXBuildFile; fileRef = 294D7D991D0E93A2002CE7B7 /* CCDevice-apple.mm */; };
 		294D7D9D1D0E93A2002CE7B7 /* CCDevice-apple.mm in Sources */ = {isa = PBXBuildFile; fileRef = 294D7D991D0E93A2002CE7B7 /* CCDevice-apple.mm */; };
+		2DAD43F4240F997100618B31 /* AudioEngineWanbaDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = 2DAD43F0240F997100618B31 /* AudioEngineWanbaDelegate.h */; };
+		2DAD43F5240F997100618B31 /* AudioEngine-inlwanba.mm in Sources */ = {isa = PBXBuildFile; fileRef = 2DAD43F1240F997100618B31 /* AudioEngine-inlwanba.mm */; };
+		2DAD43F6240F997100618B31 /* AudioEngine-inlwanba.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 2DAD43F2240F997100618B31 /* AudioEngine-inlwanba.hpp */; };
+		2DAD43F7240F997100618B31 /* AudioEngineWanbaDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 2DAD43F3240F997100618B31 /* AudioEngineWanbaDelegate.m */; };
 		4008729420CE20C2002EB77B /* jsb_cocos2dx_network_manual.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4008729220CE20C2002EB77B /* jsb_cocos2dx_network_manual.cpp */; };
 		4008729520CE20C2002EB77B /* jsb_cocos2dx_network_manual.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4008729220CE20C2002EB77B /* jsb_cocos2dx_network_manual.cpp */; };
 		4008729620CE20C2002EB77B /* jsb_cocos2dx_network_manual.h in Headers */ = {isa = PBXBuildFile; fileRef = 4008729320CE20C2002EB77B /* jsb_cocos2dx_network_manual.h */; };
@@ -1915,6 +1919,10 @@
 		1ACF6A3B1E4AFDC80033C137 /* libssl.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libssl.a; path = ../external/ios/libs/libssl.a; sourceTree = "<group>"; };
 		294D7D981D0E93A2002CE7B7 /* CCDevice-apple.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "CCDevice-apple.h"; sourceTree = "<group>"; };
 		294D7D991D0E93A2002CE7B7 /* CCDevice-apple.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "CCDevice-apple.mm"; sourceTree = "<group>"; };
+		2DAD43F0240F997100618B31 /* AudioEngineWanbaDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AudioEngineWanbaDelegate.h; sourceTree = "<group>"; };
+		2DAD43F1240F997100618B31 /* AudioEngine-inlwanba.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "AudioEngine-inlwanba.mm"; sourceTree = "<group>"; };
+		2DAD43F2240F997100618B31 /* AudioEngine-inlwanba.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = "AudioEngine-inlwanba.hpp"; sourceTree = "<group>"; };
+		2DAD43F3240F997100618B31 /* AudioEngineWanbaDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AudioEngineWanbaDelegate.m; sourceTree = "<group>"; };
 		4008729220CE20C2002EB77B /* jsb_cocos2dx_network_manual.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = jsb_cocos2dx_network_manual.cpp; sourceTree = "<group>"; };
 		4008729320CE20C2002EB77B /* jsb_cocos2dx_network_manual.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = jsb_cocos2dx_network_manual.h; sourceTree = "<group>"; };
 		4037F5CA2108751E001C205C /* CCAsyncTaskPool.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CCAsyncTaskPool.h; sourceTree = "<group>"; };
@@ -3025,6 +3033,7 @@
 		1AAAC877205CB6E9005321B9 /* audio */ = {
 			isa = PBXGroup;
 			children = (
+				2DAD43EF240F997100618B31 /* wanba */,
 				1AAAC878205CB6E9005321B9 /* apple */,
 				1AAAC882205CB6E9005321B9 /* AudioEngine.cpp */,
 				1AAAC883205CB6E9005321B9 /* include */,
@@ -3056,6 +3065,17 @@
 				1AAAC885205CB6E9005321B9 /* Export.h */,
 			);
 			path = include;
+			sourceTree = "<group>";
+		};
+		2DAD43EF240F997100618B31 /* wanba */ = {
+			isa = PBXGroup;
+			children = (
+				2DAD43F0240F997100618B31 /* AudioEngineWanbaDelegate.h */,
+				2DAD43F1240F997100618B31 /* AudioEngine-inlwanba.mm */,
+				2DAD43F2240F997100618B31 /* AudioEngine-inlwanba.hpp */,
+				2DAD43F3240F997100618B31 /* AudioEngineWanbaDelegate.m */,
+			);
+			path = wanba;
 			sourceTree = "<group>";
 		};
 		4043D65B20D2132E00C55611 /* desktop */ = {
@@ -3861,6 +3881,7 @@
 				469303A22046AE05004A3D6C /* Object.hpp in Headers */,
 				04F0A95E234F14BE002C3533 /* TimelineType.h in Headers */,
 				1A52DAF6205BB81400350EE3 /* CCThreadPool.h in Headers */,
+				2DAD43F4240F997100618B31 /* AudioEngineWanbaDelegate.h in Headers */,
 				046E06642185B41B00B24E2D /* Armature.h in Headers */,
 				1AAAC8E9205CB6E9005321B9 /* AudioMacros.h in Headers */,
 				1AAAC8EF205CB6E9005321B9 /* AudioEngine-inl.h in Headers */,
@@ -3924,6 +3945,7 @@
 				046E067B2185B42F00B24E2D /* DragonBonesHeaders.h in Headers */,
 				046E06C72185B49F00B24E2D /* DisplayData.h in Headers */,
 				46FDDADB202ACC6A00931238 /* State.h in Headers */,
+				2DAD43F6240F997100618B31 /* AudioEngine-inlwanba.hpp in Headers */,
 				1A29D771205665D200168D9A /* jsb_cocos2dx_manual.hpp in Headers */,
 				04F0A904234F14BE002C3533 /* SkeletonBounds.h in Headers */,
 				46AE3FFF2092F3A600F3A228 /* v8_inspector_protocol_json.h in Headers */,
@@ -4583,6 +4605,7 @@
 				04355816217EADF300B9C056 /* IOBuffer.cpp in Sources */,
 				04F0A930234F14BE002C3533 /* AttachmentTimeline.cpp in Sources */,
 				1A52DAF8205BB81400350EE3 /* CCThreadPool.cpp in Sources */,
+				2DAD43F7240F997100618B31 /* AudioEngineWanbaDelegate.m in Sources */,
 				46AE3FFB2092F3A600F3A228 /* inspector_io.cc in Sources */,
 				4037F5CE2108751E001C205C /* CCAsyncTaskPool.cpp in Sources */,
 				04F0A9F4234F14BE002C3533 /* PathAttachment.cpp in Sources */,
@@ -4650,6 +4673,7 @@
 				46AE40032092F3A600F3A228 /* http_parser.c in Sources */,
 				1A586C4B2064C97800B47573 /* EJConvert.m in Sources */,
 				1AAAC8E7205CB6E9005321B9 /* AudioEngine-inl.mm in Sources */,
+				2DAD43F5240F997100618B31 /* AudioEngine-inlwanba.mm in Sources */,
 				46FDDB71202ADDCE00931238 /* base64.cpp in Sources */,
 				1AAAC873205CB647005321B9 /* jsb_cocos2dx_audioengine_auto.cpp in Sources */,
 				423379A322BB8DEA00E5D8A2 /* EffectVariant.cpp in Sources */,

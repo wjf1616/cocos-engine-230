@@ -100,6 +100,13 @@ public:
         PAUSED
     };
     
+    enum AudioMode
+    {
+        NONE = -1,
+        COCOS,
+        WANBA
+    };
+    
     static const int INVALID_AUDIO_ID;
 
     static const float TIME_UNKNOWN;
@@ -317,9 +324,20 @@ public:
      */
     static bool isEnabled();
     
+    static bool isInited();
+#if CC_TARGET_PLATFORM == CC_PLATFORM_IOS || CC_TARGET_PLATFORM == CC_PLATFORM_MAC
+    static void switchAudioModeToCocos();
+    static void switchAudioModeToWanba();
+    static AudioMode getCurrentAudioMode();
+    static void wanbaEngineSetEnabled(bool isEnabled);
+    static bool wanbaEngineIsEnabled();
+#endif
+
+    static void remove(int audioID);
+    
 protected:
     static void addTask(const std::function<void()>& task);
-    static void remove(int audioID);
+//    static void remove(int audioID);
     
     struct ProfileHelper
     {
@@ -374,6 +392,10 @@ protected:
     static AudioEngineThreadPool* s_threadPool;
     
     static bool _isEnabled;
+    
+    static AudioEngineImpl* _audioEngineImplCocos;
+    static AudioEngineImpl* _audioEngineImplWanba;
+    static AudioMode _mode;
     
 private:
     static uint32_t _onPauseListenerID;

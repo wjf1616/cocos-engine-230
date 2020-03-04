@@ -102,7 +102,7 @@ void AudioPlayer::destroy()
 
         // Wait for play2d to be finished.
         _play2dMutex.lock();
-        _play2dMutex.unlock();
+//        _play2dMutex.unlock();
 
         if (_streamingSource)
         {
@@ -134,6 +134,8 @@ void AudioPlayer::destroy()
 
     _ready = false;
     ALOGVV("AudioPlayer::destroy end, id=%u", _id);
+    
+    _play2dMutex.unlock();
 }
 
 void AudioPlayer::setCache(AudioCache* cache)

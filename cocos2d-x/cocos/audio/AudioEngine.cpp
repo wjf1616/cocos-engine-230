@@ -38,6 +38,7 @@
 #include "audio/android/AudioEngine-inl.h"
 #elif CC_TARGET_PLATFORM == CC_PLATFORM_IOS || CC_TARGET_PLATFORM == CC_PLATFORM_MAC
 #include "audio/apple/AudioEngine-inl.h"
+#include "audio/wanba/AudioEngine-inlwanba.hpp"
 #elif CC_TARGET_PLATFORM == CC_PLATFORM_WIN32
 #include "audio/win32/AudioEngine-win32.h"
 #elif CC_TARGET_PLATFORM == CC_PLATFORM_WINRT
@@ -74,6 +75,10 @@ std::vector<int> AudioEngine::_breakAudioID;
 
 AudioEngine::AudioEngineThreadPool* AudioEngine::s_threadPool = nullptr;
 bool AudioEngine::_isEnabled = true;
+
+AudioEngineImpl* AudioEngine::_audioEngineImplCocos = nullptr;
+AudioEngineImpl* AudioEngine::_audioEngineImplWanba = nullptr;
+AudioEngine::AudioMode AudioEngine::_mode = AudioMode::NONE;
 
 AudioEngine::AudioInfo::AudioInfo()
 : filePath(nullptr)
@@ -166,9 +171,21 @@ void AudioEngine::end()
         s_threadPool = nullptr;
     }
 
-    delete _audioEngineImpl;
+    if (_audioEngineImplCocos) {
+        delete _audioEngineImplCocos;
+    }
+    if (_audioEngineImplWanba) {
+        delete _audioEngineImplWanba;
+    }
+    
     _audioEngineImpl = nullptr;
-
+    _audioEngineImplCocos = nullptr;
+    _audioEngineImplWanba = nullptr;
+    _mode = NONE;
+    
+//    delete _audioEngineImpl;
+//    _audioEngineImpl = nullptr;
+    
     delete _defaultProfileHelper;
     _defaultProfileHelper = nullptr;
 
@@ -203,6 +220,9 @@ bool AudioEngine::lazyInit()
     if (_audioEngineImpl && s_threadPool == nullptr)
     {
         s_threadPool = new (std::nothrow) AudioEngineThreadPool();
+        
+        _audioEngineImplCocos = _audioEngineImpl;
+        _audioEngineImplWanba = new (std::nothrow) AudioEngineInlWanba();
     }
 #endif
 
@@ -261,7 +281,7 @@ int AudioEngine::play2d(const std::string& filePath, bool loop, float volume, co
         }
         
         ret = _audioEngineImpl->play2d(filePath, loop, volume);
-        if (ret != INVALID_AUDIO_ID)
+        if (ret != INVALID_AUDIO_ID && _mode != AudioMode::WANBA)
         {
             _audioPathIDMap[filePath].push_back(ret);
             auto it = _audioPathIDMap.find(filePath);
@@ -284,6 +304,14 @@ int AudioEngine::play2d(const std::string& filePath, bool loop, float volume, co
 
 void AudioEngine::setLoop(int audioID, bool loop)
 {
+    if(!_audioEngineImpl){
+        return;
+    }
+    if (_mode == AudioMode::WANBA) {
+        _audioEngineImpl->setLoop(audioID, loop);
+        return;
+    }
+    
     auto it = _audioIDInfoMap.find(audioID);
     if (it != _audioIDInfoMap.end() && it->second.loop != loop){
         _audioEngineImpl->setLoop(audioID, loop);
@@ -293,15 +321,24 @@ void AudioEngine::setLoop(int audioID, bool loop)
 
 void AudioEngine::setVolume(int audioID, float volume)
 {
+    if(!_audioEngineImpl){
+        return;
+    }
+    
+    if (volume < 0.0f) {
+        volume = 0.0f;
+    }
+    else if (volume > 1.0f){
+        volume = 1.0f;
+    }
+    
+    if (_mode == AudioMode::WANBA) {
+        _audioEngineImpl->setVolume(audioID, volume);
+        return;
+    }
+    
     auto it = _audioIDInfoMap.find(audioID);
     if (it != _audioIDInfoMap.end()){
-        if (volume < 0.0f) {
-            volume = 0.0f;
-        }
-        else if (volume > 1.0f){
-            volume = 1.0f;
-        }
-
         if (it->second.volume != volume){
             _audioEngineImpl->setVolume(audioID, volume);
             it->second.volume = volume;
@@ -311,6 +348,15 @@ void AudioEngine::setVolume(int audioID, float volume)
 
 void AudioEngine::pause(int audioID)
 {
+    if(!_audioEngineImpl){
+        return;
+    }
+    
+    if (_mode == AudioMode::WANBA) {
+        _audioEngineImpl->pause(audioID);
+        return;
+    }
+    
     auto it = _audioIDInfoMap.find(audioID);
     if (it != _audioIDInfoMap.end() && it->second.state == AudioState::PLAYING){
         _audioEngineImpl->pause(audioID);
@@ -320,6 +366,17 @@ void AudioEngine::pause(int audioID)
 
 void AudioEngine::pauseAll()
 {
+    if(!_audioEngineImpl){
+            return;
+    }
+#if CC_TARGET_PLATFORM == CC_PLATFORM_IOS || CC_TARGET_PLATFORM == CC_PLATFORM_MAC
+    if (_mode == AudioMode::WANBA) {
+        auto wanbaEngine = static_cast<AudioEngineInlWanba*>(_audioEngineImpl);
+        wanbaEngine->pauseAll();
+        return;
+    }
+#endif
+    
     auto itEnd = _audioIDInfoMap.end();
     for (auto it = _audioIDInfoMap.begin(); it != itEnd; ++it)
     {
@@ -333,6 +390,15 @@ void AudioEngine::pauseAll()
 
 void AudioEngine::resume(int audioID)
 {
+    if(!_audioEngineImpl){
+        return;
+    }
+    
+    if (_mode == AudioMode::WANBA) {
+        _audioEngineImpl->resume(audioID);
+        return;
+    }
+    
     auto it = _audioIDInfoMap.find(audioID);
     if (it != _audioIDInfoMap.end() && it->second.state == AudioState::PAUSED){
         _audioEngineImpl->resume(audioID);
@@ -342,6 +408,18 @@ void AudioEngine::resume(int audioID)
 
 void AudioEngine::resumeAll()
 {
+    if(!_audioEngineImpl){
+        return;
+    }
+    
+#if CC_TARGET_PLATFORM == CC_PLATFORM_IOS || CC_TARGET_PLATFORM == CC_PLATFORM_MAC
+    if (_mode == AudioMode::WANBA) {
+        auto wanbaEngine = static_cast<AudioEngineInlWanba*>(_audioEngineImpl);
+        wanbaEngine->resumeAll();
+        return;
+    }
+#endif
+    
     auto itEnd = _audioIDInfoMap.end();
     for (auto it = _audioIDInfoMap.begin(); it != itEnd; ++it)
     {
@@ -375,6 +453,18 @@ void AudioEngine::onResume(const CustomEvent &event) {
 
 void AudioEngine::stop(int audioID)
 {
+    if(!_audioEngineImpl){
+        return;
+    }
+    
+#if CC_TARGET_PLATFORM == CC_PLATFORM_IOS || CC_TARGET_PLATFORM == CC_PLATFORM_MAC
+    if (_mode == AudioMode::WANBA) {
+        auto wanbaEngine = static_cast<AudioEngineInlWanba*>(_audioEngineImpl);
+        wanbaEngine->stop(audioID);
+        return;
+    }
+#endif
+    
     auto it = _audioIDInfoMap.find(audioID);
     if (it != _audioIDInfoMap.end()){
         _audioEngineImpl->stop(audioID);
@@ -424,7 +514,10 @@ void AudioEngine::uncache(const std::string &filePath)
         
         for (int audioID : copiedIDs)
         {
-            _audioEngineImpl->stop(audioID);
+            if (_audioEngineImpl) {
+                _audioEngineImpl->stop(audioID);
+            }
+//            _audioEngineImpl->stop(audioID);
             
             auto itInfo = _audioIDInfoMap.find(audioID);
             if (itInfo != _audioIDInfoMap.end())
@@ -456,6 +549,18 @@ void AudioEngine::uncacheAll()
 
 float AudioEngine::getDuration(int audioID)
 {
+    if(!_audioEngineImpl){
+        return TIME_UNKNOWN;
+    }
+    
+    
+#if CC_TARGET_PLATFORM == CC_PLATFORM_IOS || CC_TARGET_PLATFORM == CC_PLATFORM_MAC
+    if (_mode == AudioMode::WANBA) {
+        auto wanbaEngine = static_cast<AudioEngineInlWanba*>(_audioEngineImpl);
+        return wanbaEngine->getDuration(audioID);
+    }
+#endif
+    
     auto it = _audioIDInfoMap.find(audioID);
     if (it != _audioIDInfoMap.end() && it->second.state != AudioState::INITIALIZING)
     {
@@ -483,6 +588,17 @@ float AudioEngine::getDurationFromFile(const std::string& filePath)
 
 bool AudioEngine::setCurrentTime(int audioID, float time)
 {
+    if(!_audioEngineImpl){
+        return false;
+    }
+    
+#if CC_TARGET_PLATFORM == CC_PLATFORM_IOS || CC_TARGET_PLATFORM == CC_PLATFORM_MAC
+    if (_mode == AudioMode::WANBA) {
+        auto wanbaEngine = static_cast<AudioEngineInlWanba*>(_audioEngineImpl);
+        return wanbaEngine->setCurrentTime(audioID, time);
+    }
+#endif
+    
     auto it = _audioIDInfoMap.find(audioID);
     if (it != _audioIDInfoMap.end() && it->second.state != AudioState::INITIALIZING) {
         return _audioEngineImpl->setCurrentTime(audioID, time);
@@ -493,6 +609,17 @@ bool AudioEngine::setCurrentTime(int audioID, float time)
 
 float AudioEngine::getCurrentTime(int audioID)
 {
+    if(!_audioEngineImpl){
+        return 0.0f;
+    }
+    
+#if CC_TARGET_PLATFORM == CC_PLATFORM_IOS || CC_TARGET_PLATFORM == CC_PLATFORM_MAC
+    if (_mode == AudioMode::WANBA) {
+        auto wanbaEngine = static_cast<AudioEngineInlWanba*>(_audioEngineImpl);
+        return wanbaEngine->getCurrentTime(audioID);
+    }
+#endif
+    
     auto it = _audioIDInfoMap.find(audioID);
     if (it != _audioIDInfoMap.end() && it->second.state != AudioState::INITIALIZING) {
         return _audioEngineImpl->getCurrentTime(audioID);
@@ -502,6 +629,18 @@ float AudioEngine::getCurrentTime(int audioID)
 
 void AudioEngine::setFinishCallback(int audioID, const std::function<void (int, const std::string &)> &callback)
 {
+    if(!_audioEngineImpl){
+        return;
+    }
+    
+#if CC_TARGET_PLATFORM == CC_PLATFORM_IOS || CC_TARGET_PLATFORM == CC_PLATFORM_MAC
+    if (_mode == AudioMode::WANBA) {
+        auto wanbaEngine = static_cast<AudioEngineInlWanba*>(_audioEngineImpl);
+        wanbaEngine->setFinishCallback(audioID, callback);
+        return;
+    }
+#endif
+    
     auto it = _audioIDInfoMap.find(audioID);
     if (it != _audioIDInfoMap.end()){
         _audioEngineImpl->setFinishCallback(audioID, callback);
@@ -641,3 +780,51 @@ bool AudioEngine::isEnabled()
     return _isEnabled;
 }
 
+bool AudioEngine::isInited()
+{
+    return _audioEngineImpl != nullptr;
+}
+
+#if CC_TARGET_PLATFORM == CC_PLATFORM_IOS || CC_TARGET_PLATFORM == CC_PLATFORM_MAC
+
+void AudioEngine::switchAudioModeToCocos() {
+    
+    if (_mode == AudioMode::COCOS) {
+        return;
+    }
+    
+    _audioEngineImpl = _audioEngineImplCocos;
+    _mode = AudioMode::COCOS;
+}
+
+void AudioEngine::switchAudioModeToWanba() {
+    if (_mode == AudioEngine::AudioMode::WANBA) {
+        return;
+    }
+    
+    _audioEngineImpl = _audioEngineImplWanba;
+    _mode = AudioMode::WANBA;
+}
+
+AudioEngine::AudioMode AudioEngine::getCurrentAudioMode() {
+    return _mode;
+//    return AudioMode::WANBA;
+}
+
+void AudioEngine::wanbaEngineSetEnabled(bool isEnabled) {
+    if (_mode != AudioEngine::AudioMode::WANBA) {
+        return;
+    }
+    AudioEngineInlWanba* engine = static_cast<AudioEngineInlWanba*>(_audioEngineImpl);
+    engine->wanbaEngineSetEnabled(isEnabled);
+}
+
+bool AudioEngine::wanbaEngineIsEnabled() {
+    if (_mode != AudioEngine::AudioMode::WANBA) {
+        return false;
+    }
+    AudioEngineInlWanba* engine = static_cast<AudioEngineInlWanba*>(_audioEngineImpl);
+    return engine->wanbaEngineIsEnabled();
+}
+
+#endif

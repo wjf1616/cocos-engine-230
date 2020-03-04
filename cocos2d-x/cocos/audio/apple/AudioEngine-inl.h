@@ -46,24 +46,24 @@ public:
     AudioEngineImpl();
     ~AudioEngineImpl();
 
-    bool init();
-    int play2d(const std::string &fileFullPath ,bool loop ,float volume);
-    void setVolume(int audioID,float volume);
-    void setLoop(int audioID, bool loop);
-    bool pause(int audioID);
-    bool resume(int audioID);
-    void stop(int audioID);
-    void stopAll();
-    float getDuration(int audioID);
-    float getDurationFromFile(const std::string &fileFullPath);
-    float getCurrentTime(int audioID);
-    bool setCurrentTime(int audioID, float time);
-    void setFinishCallback(int audioID, const std::function<void (int, const std::string &)> &callback);
+    virtual bool init();
+    virtual int play2d(const std::string &fileFullPath ,bool loop ,float volume);
+    virtual void setVolume(int audioID,float volume);
+    virtual void setLoop(int audioID, bool loop);
+    virtual bool pause(int audioID);
+    virtual bool resume(int audioID);
+    virtual void stop(int audioID);
+    virtual void stopAll();
+    virtual float getDuration(int audioID);
+    virtual float getDurationFromFile(const std::string &fileFullPath);
+    virtual float getCurrentTime(int audioID);
+    virtual bool setCurrentTime(int audioID, float time);
+    virtual void setFinishCallback(int audioID, const std::function<void (int, const std::string &)> &callback);
 
-    void uncache(const std::string& filePath);
-    void uncacheAll();
-    AudioCache* preload(const std::string& filePath, std::function<void(bool)> callback);
-    void update(float dt);
+    virtual void uncache(const std::string& filePath);
+    virtual void uncacheAll();
+    virtual AudioCache* preload(const std::string& filePath, std::function<void(bool)> callback);
+    virtual void update(float dt);
 
 private:
     bool _checkAudioIdValid(int audioID);
