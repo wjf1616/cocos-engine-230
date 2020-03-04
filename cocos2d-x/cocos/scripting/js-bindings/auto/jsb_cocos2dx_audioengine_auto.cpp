@@ -761,7 +761,89 @@ static bool js_audioengine_AudioEngine_getPlayingAudioCount(se::State& s)
 }
 SE_BIND_FUNC(js_audioengine_AudioEngine_getPlayingAudioCount)
 
+#if CC_TARGET_PLATFORM == CC_PLATFORM_IOS || CC_TARGET_PLATFORM == CC_PLATFORM_MAC
 
+static bool js_cocos2dx_audioengine_AudioEngine_switchAudioModeToCocos(se::State& s)
+{
+    const auto& args = s.args();
+    size_t argc = args.size();
+    CC_UNUSED bool ok = true;
+    if (argc == 0) {
+        cocos2d::AudioEngine::switchAudioModeToCocos();
+        SE_PRECONDITION2(ok, false, "js_cocos2dx_audioengine_AudioEngine_switchAudioModeToCocos : Error processing arguments");
+        return true;
+    }
+    SE_REPORT_ERROR("wrong number of arguments: %d, was expecting %d", (int)argc, 0);
+    return false;
+}
+SE_BIND_FUNC(js_cocos2dx_audioengine_AudioEngine_switchAudioModeToCocos)
+
+static bool js_cocos2dx_audioengine_AudioEngine_switchAudioModeToWanba(se::State& s)
+{
+    const auto& args = s.args();
+    size_t argc = args.size();
+    CC_UNUSED bool ok = true;
+    if (argc == 0) {
+        cocos2d::AudioEngine::switchAudioModeToWanba();
+        SE_PRECONDITION2(ok, false, "js_cocos2dx_audioengine_AudioEngine_switchAudioModeToWanba : Error processing arguments");
+        return true;
+    }
+    SE_REPORT_ERROR("wrong number of arguments: %d, was expecting %d", (int)argc, 0);
+    return false;
+}
+SE_BIND_FUNC(js_cocos2dx_audioengine_AudioEngine_switchAudioModeToWanba)
+
+static bool js_cocos2dx_audioengine_AudioEngine_getCurrentAudioMode(se::State& s)
+{
+    const auto& args = s.args();
+    size_t argc = args.size();
+    CC_UNUSED bool ok = true;
+    if (argc == 0) {
+        auto result = cocos2d::AudioEngine::getCurrentAudioMode();
+        ok &= int32_to_seval((int)result, &s.rval());
+        SE_PRECONDITION2(ok, false, "js_cocos2dx_audioengine_AudioEngine_switchAudioModeToWanba : Error processing arguments");
+        return true;
+    }
+    SE_REPORT_ERROR("wrong number of arguments: %d, was expecting %d", (int)argc, 0);
+    return false;
+}
+SE_BIND_FUNC(js_cocos2dx_audioengine_AudioEngine_getCurrentAudioMode)
+
+
+static bool js_cocos2dx_audioengine_AudioEngine_wanbaEngineSetEnabled(se::State& s)
+{
+    const auto& args = s.args();
+    size_t argc = args.size();
+    CC_UNUSED bool ok = true;
+    if (argc == 1) {
+        bool arg0 = false;
+        ok &= seval_to_boolean(args[0], (bool*)&arg0);
+        cocos2d::AudioEngine::wanbaEngineSetEnabled(arg0);
+        SE_PRECONDITION2(ok, false, "js_cocos2dx_audioengine_AudioEngine_wanbaEngineSetEnabled : Error processing arguments");
+        return true;
+    }
+    SE_REPORT_ERROR("wrong number of arguments: %d, was expecting %d", (int)argc, 0);
+    return false;
+}
+SE_BIND_FUNC(js_cocos2dx_audioengine_AudioEngine_wanbaEngineSetEnabled)
+
+static bool js_cocos2dx_audioengine_AudioEngine_wanbaEngineIsEnabled(se::State& s)
+{
+    const auto& args = s.args();
+    size_t argc = args.size();
+    CC_UNUSED bool ok = true;
+    if (argc == 0) {
+        auto result = cocos2d::AudioEngine::wanbaEngineIsEnabled();
+        ok &= boolean_to_seval(result, &s.rval());
+        SE_PRECONDITION2(ok, false, "js_cocos2dx_audioengine_AudioEngine_wanbaEngineSetEnabled : Error processing arguments");
+        return true;
+    }
+    SE_REPORT_ERROR("wrong number of arguments: %d, was expecting %d", (int)argc, 0);
+    return false;
+}
+SE_BIND_FUNC(js_cocos2dx_audioengine_AudioEngine_wanbaEngineIsEnabled)
+
+#endif
 
 
 bool js_register_audioengine_AudioEngine(se::Object* obj)
@@ -797,6 +879,14 @@ bool js_register_audioengine_AudioEngine(se::Object* obj)
     cls->defineStaticFunction("setFinishCallback", _SE(js_audioengine_AudioEngine_setFinishCallback));
     cls->defineStaticFunction("getProfile", _SE(js_audioengine_AudioEngine_getProfile));
     cls->defineStaticFunction("getPlayingAudioCount", _SE(js_audioengine_AudioEngine_getPlayingAudioCount));
+#if CC_TARGET_PLATFORM == CC_PLATFORM_IOS || CC_TARGET_PLATFORM == CC_PLATFORM_MAC
+    cls->defineStaticFunction("switchAudioModeToCocos", _SE(js_cocos2dx_audioengine_AudioEngine_switchAudioModeToCocos));
+    cls->defineStaticFunction("switchAudioModeToWanba", _SE(js_cocos2dx_audioengine_AudioEngine_switchAudioModeToWanba));
+    cls->defineStaticFunction("getCurrentAudioMode", _SE(js_cocos2dx_audioengine_AudioEngine_getCurrentAudioMode));
+    cls->defineStaticFunction("wanbaEngineSetEnabled", _SE(js_cocos2dx_audioengine_AudioEngine_wanbaEngineSetEnabled));
+    cls->defineStaticFunction("wanbaEngineIsEnabled", _SE(js_cocos2dx_audioengine_AudioEngine_wanbaEngineIsEnabled));
+
+#endif
     cls->install();
     JSBClassType::registerClass<cocos2d::AudioEngine>(cls);
 

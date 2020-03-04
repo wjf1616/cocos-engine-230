@@ -81,7 +81,7 @@
 
 #include <android/log.h>
 
-#define  LOG_TAG    "jswrapper"
+#define  LOG_TAG    "cocos jswrapper"
 #define  SE_LOGD(...)  __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
 #define  SE_LOGE(...)  __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
 
@@ -98,7 +98,7 @@
 void seLogD(const char * format, ...);
 void seLogE(const char * format, ...);
 
-#define LOG_TAG    "jswrapper"
+#define LOG_TAG    "cocos jswrapper"
 #define SE_LOGD(fmt, ...) seLogD("D/" LOG_TAG " (" QUOTEME(__LINE__) "): " fmt "", ##__VA_ARGS__)
 #define SE_LOGE(fmt, ...) seLogE("E/" LOG_TAG " (" QUOTEME(__LINE__) "): " fmt "", ##__VA_ARGS__)
 

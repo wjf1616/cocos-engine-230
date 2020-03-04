@@ -470,4 +470,16 @@ std::string Application::getSystemVersion()
     return [systemVersion UTF8String];
 }
 
+void Application::notificationNative(const std::string& eventName,const std::string& eventInfo){
+    [[NSNotificationCenter defaultCenter] postNotificationName:[NSString stringWithCString:eventName.c_str() encoding:NSUTF8StringEncoding] object:[NSString stringWithCString:eventInfo.c_str() encoding:NSUTF8StringEncoding]];
+}
+
+std::string Application::getVersion() {
+    NSString* version = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleShortVersionString"];
+    if (version) {
+        return [version UTF8String];
+    }
+    return "";
+}
+
 NS_CC_END

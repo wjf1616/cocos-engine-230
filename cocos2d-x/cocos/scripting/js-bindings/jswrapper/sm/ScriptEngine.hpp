@@ -189,7 +189,8 @@ namespace se {
          *  @return true if succeed, otherwise false.
          */
         bool runScript(const std::string& path, Value* rval = nullptr);
-
+        bool cleanScriptFileCache(const std::string & path);
+        
         /**
          *  @brief Tests whether script engine is doing garbage collection.
          *  @return true if it's in garbage collection, otherwise false.
@@ -289,6 +290,7 @@ namespace se {
         std::vector<std::function<void()>> _afterCleanupHookArray;
 
         ExceptionCallback _exceptionCallback;
+        
         // name ~> JSScript map
         std::unordered_map<std::string, JS::PersistentRootedScript*> _filenameScriptMap;
 

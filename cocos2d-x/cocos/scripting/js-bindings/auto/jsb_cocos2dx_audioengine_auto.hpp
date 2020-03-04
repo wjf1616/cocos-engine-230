@@ -46,4 +46,11 @@ SE_DECLARE_FUNC(js_audioengine_AudioEngine_setFinishCallback);
 SE_DECLARE_FUNC(js_audioengine_AudioEngine_getProfile);
 SE_DECLARE_FUNC(js_audioengine_AudioEngine_getPlayingAudioCount);
 
+#if CC_TARGET_PLATFORM == CC_PLATFORM_IOS || CC_TARGET_PLATFORM == CC_PLATFORM_MAC
+SE_DECLARE_FUNC(js_cocos2dx_audioengine_AudioEngine_switchAudioModeToCocos);
+SE_DECLARE_FUNC(js_cocos2dx_audioengine_AudioEngine_switchAudioModeToWanba);
+SE_DECLARE_FUNC(js_cocos2dx_audioengine_AudioEngine_wanbaEngineSetEnabled);
+SE_DECLARE_FUNC(js_cocos2dx_audioengine_AudioEngine_wanbaEngineIsEnabled);
+#endif
+
 #endif //#if (USE_AUDIO > 0) && (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID || CC_TARGET_PLATFORM == CC_PLATFORM_IOS || CC_TARGET_PLATFORM == CC_PLATFORM_MAC || CC_TARGET_PLATFORM == CC_PLATFORM_WIN32)

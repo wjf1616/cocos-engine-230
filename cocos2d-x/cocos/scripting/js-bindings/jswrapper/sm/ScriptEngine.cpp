@@ -1138,6 +1138,17 @@ namespace se {
         return ok;
     }
 
+    bool ScriptEngine::cleanScriptFileCache(const std::string & path) {
+        std::string fullPath = _fileOperationDelegate.onGetFullPath(path);
+        auto iter = _filenameScriptMap.find(fullPath);
+        if (iter != _filenameScriptMap.end())
+        {
+            _filenameScriptMap.erase(iter);
+            return true;
+        }
+        return true;
+    }
+
     void ScriptEngine::clearException()
     {
         if (_cx == nullptr)

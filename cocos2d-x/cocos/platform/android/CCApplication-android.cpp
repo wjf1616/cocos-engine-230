@@ -38,6 +38,8 @@ THE SOFTWARE.
 #define  LOG_APP_TAG    "CCApplication_android Debug"
 #define  LOGD(...)  __android_log_print(ANDROID_LOG_DEBUG,LOG_APP_TAG,__VA_ARGS__)
 
+static const std::string helperClassName = "org/cocos2dx/lib/Cocos2dxHelper";
+
 // IDEA: using ndk-r10c will cause the next function could not be found. It may be a bug of ndk-r10c.
 // Here is the workaround method to fix the problem.
 #ifdef __aarch64__
@@ -288,5 +290,20 @@ const cocos2d::Vec2& Application::getViewSize() const
 {
     return _viewSize;
 }
+
+void Application::notificationNative(const std::string& eventName,const std::string& eventInfo) {
+    JniHelper::callStaticVoidMethod("com/wodi/who/game/activity/CocosGameActivity", "notificationNative", eventName, eventInfo);
+}
+
+std::string Application::getVersion()
+{
+    return JniHelper::callStaticStringMethod(helperClassName, "getVersion");
+}
+
+bool Application::openURL(const std::string &url)
+{
+    return JniHelper::callStaticBooleanMethod(helperClassName, "openURL", url);
+}
+
 
 NS_CC_END

@@ -52,7 +52,7 @@ JNIEXPORT jint JNICALL JNI_JSJAVABRIDGE(evalString)
         return 0;
     }
 
-    se::AutoHandleScope hs;
+    // se::AutoHandleScope hs;
     bool strFlag = false;
     std::string strValue = cocos2d::StringUtils::getStringUTFCharsJNI(env, value, &strFlag);
     if (!strFlag)

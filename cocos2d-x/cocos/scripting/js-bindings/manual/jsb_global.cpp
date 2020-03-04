@@ -639,8 +639,17 @@ SE_BIND_FUNC(JSB_getOSVersion)
 
 static bool JSB_cleanScript(se::State& s)
 {
-    assert(false); //IDEA:
+    const auto& args = s.args();
+    int argc = (int)args.size();
+    assert(argc >= 1);
+    assert(args[0].isString());
+    
+#if SCRIPT_ENGINE_TYPE == SCRIPT_ENGINE_SM
+    return se::ScriptEngine::getInstance()->cleanScriptFileCache(args[0].toString());
+#else
     return true;
+#endif
+
 }
 SE_BIND_FUNC(JSB_cleanScript)
 

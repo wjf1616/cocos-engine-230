@@ -186,6 +186,8 @@ public:
 
     std::string getSystemVersion();
     
+    virtual void notificationNative(const std::string& eventName,const std::string& eventInfo);
+    virtual std::string getVersion();
 protected:
     virtual void onCreateView(PixelFormat& pixelformat, DepthFormat& depthFormat, int& multisamplingCount);
     
