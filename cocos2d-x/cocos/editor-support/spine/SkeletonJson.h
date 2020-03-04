@@ -69,6 +69,8 @@ public:
 
 	String &getError() { return _error; }
 
+    void readVertices(Json *attachmentMap, VertexAttachment *attachment, size_t verticesLength);
+    
 private:
 	AttachmentLoader *_attachmentLoader;
 	Vector<LinkedMesh *> _linkedMeshes;
@@ -81,8 +83,6 @@ private:
 	static void readCurve(Json *frame, CurveTimeline *timeline, size_t frameIndex);
 
 	Animation *readAnimation(Json *root, SkeletonData *skeletonData);
-
-	void readVertices(Json *attachmentMap, VertexAttachment *attachment, size_t verticesLength);
 
 	void setError(Json *root, const String &value1, const String &value2);
 };

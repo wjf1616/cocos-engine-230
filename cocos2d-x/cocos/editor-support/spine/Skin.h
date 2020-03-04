@@ -55,12 +55,20 @@ public:
 			size_t _slotIndex;
 			String _name;
 			Attachment *_attachment;
-
+            String _cacheName;
+            
 			Entry(size_t slotIndex, const String &name, Attachment *attachment) :
 					_slotIndex(slotIndex),
 					_name(name),
-					_attachment(attachment) {
-			}
+					_attachment(attachment)
+            {}
+            
+            Entry(size_t slotIndex, const String &name, Attachment *attachment,const String &cacheName) :
+                    _slotIndex(slotIndex),
+                    _name(name),
+                    _attachment(attachment),
+                    _cacheName(cacheName)
+            {}
 		};
 
 		class SP_API Entries {
@@ -84,7 +92,13 @@ public:
 				++_bucketIndex;
 				return result;
 			}
-
+            
+            void activate(size_t index) {
+                auto temp = _buckets[_slotIndex][_bucketIndex];
+                _buckets[_slotIndex][_bucketIndex] = _buckets[_slotIndex][index];
+                _buckets[_slotIndex][index] = temp;
+            }
+            
 		protected:
 			Entries(Vector< Vector<Entry> > &buckets) : _buckets(buckets), _slotIndex(0), _bucketIndex(0) {
 			}
@@ -95,10 +109,10 @@ public:
 			size_t _bucketIndex;
 		};
 
-		void put(size_t slotIndex, const String &attachmentName, Attachment *attachment);
-
-		Attachment *get(size_t slotIndex, const String &attachmentName);
-
+		void put(size_t slotIndex, const String &attachmentName, Attachment *attachment, const String & cacheName = nullptr);
+        
+		Attachment *get(size_t slotIndex, const String &attachmentName, const String & cacheName = nullptr);
+        
 		void remove(size_t slotIndex, const String &attachmentName);
 
 		Entries getEntries();
@@ -108,8 +122,8 @@ public:
 
 	private:
 
-		int findInBucket(Vector <Entry> &, const String &attachmentName);
-
+		int findInBucket(Vector <Entry> &, const String &attachmentName,const String & cacheName = nullptr);
+        
 		Vector <Vector<Entry> > _buckets;
 	};
 
@@ -158,6 +172,17 @@ private:
 
 	/// Attach all attachments from this skin if the corresponding attachment from the old skin is currently attached.
 	void attachAll(Skeleton &skeleton, Skin &oldSkin);
+    
+public:
+    //将替换的组件，加入缓存
+    void addAttachmentToCache (int slotIndex, const String &name, Attachment* attachment, const String &cacheName);
+    
+    //缓存中是否存在该组件
+    Attachment* getAttachmentByCache (const String &name);
+    
+    //激活缓存中的组件
+    void activateAttachmentByCache(const String &name);
+    
 };
 }
 

@@ -173,6 +173,23 @@ namespace spine {
         cocos2d::renderer::NodeProxy* _nodeProxy = nullptr;
         cocos2d::renderer::EffectVariant* _effect = nullptr;
         RealTimeAttachUtil* _attachUtil = nullptr;
+        
+    public:
+        void setHSLEnable(bool enabled);
+        void setAttachmentHSLEnable(const std::string& slotName, const std::string& attachmentName,bool enabled);
+        
+        bool setAttachmentFromFile(const std::string& slotName, const std::string& atlasFile,
+                                   const std::string& jsonFile, const char* newAttachmentName);
+            
+        bool changeAttachmentHSL(const std::string& slotName, const std::string& attachmentName,
+                                 float colorH, float colorS, float colorL);
+        
+    private:
+        //获取组件的缓存key值
+        std::string getAttachmentCacheKey(const std::string& atlasFile);
+        std::vector<Atlas*> _changeAttachmentAtlas;
+        bool _hslEnable;
+        
     };
 
 }

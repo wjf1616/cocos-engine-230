@@ -183,7 +183,8 @@ public:
 	Vector<TransformConstraint *> &getTransformConstraints();
 
 	Skin *getSkin();
-
+    Skin *getSkinByName(const char* partName);
+    
 	Color &getColor();
 
 	float getTime();

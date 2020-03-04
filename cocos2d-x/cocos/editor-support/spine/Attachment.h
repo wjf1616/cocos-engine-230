@@ -51,9 +51,21 @@ public:
 	void reference();
 	void dereference();
 
+    void setHslEnable(bool enable);
+    bool getHslEnable();
+    
+    void setHSL(int h, int s, int l);
+    float getH();
+    float getS();
+    float getL();
 private:
 	const String _name;
 	int _refCount;
+    
+    bool hslEnable;
+    float colorH;
+    float colorS;
+    float colorL;
 };
 }
 

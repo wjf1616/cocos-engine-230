@@ -53,7 +53,7 @@ static void disposeAttachment(Attachment* attachment) {
 	if (attachment->getRefCount() == 0) delete attachment;
 }
 
-void Skin::AttachmentMap::put(size_t slotIndex, const String &attachmentName, Attachment *attachment) {
+void Skin::AttachmentMap::put(size_t slotIndex, const String &attachmentName, Attachment *attachment,const String & cacheName /*= nullptr*/) {
 	if (slotIndex >= _buckets.size())
 		_buckets.setSize(slotIndex + 1, Vector<Entry>());
 	Vector<Entry> &bucket = _buckets[slotIndex];
@@ -63,13 +63,21 @@ void Skin::AttachmentMap::put(size_t slotIndex, const String &attachmentName, At
 		disposeAttachment(bucket[existing]._attachment);
 		bucket[existing]._attachment = attachment;
 	} else {
-		bucket.add(Entry(slotIndex, attachmentName, attachment));
+        if(cacheName != nullptr)
+        {
+            bucket.add(Entry(slotIndex, attachmentName, attachment, cacheName));
+        }
+		else
+        {
+            bucket.add(Entry(slotIndex, attachmentName, attachment));
+        }
 	}
 }
 
-Attachment *Skin::AttachmentMap::get(size_t slotIndex, const String &attachmentName) {
+Attachment *Skin::AttachmentMap::get(size_t slotIndex, const String &attachmentName,const String & cacheName /*= nullptr*/)
+{
 	if (slotIndex >= _buckets.size()) return NULL;
-	int existing = findInBucket(_buckets[slotIndex], attachmentName);
+	int existing = findInBucket(_buckets[slotIndex], attachmentName, cacheName);
 	return existing >= 0 ? _buckets[slotIndex][existing]._attachment : NULL;
 }
 
@@ -82,9 +90,20 @@ void Skin::AttachmentMap::remove(size_t slotIndex, const String &attachmentName)
 	}
 }
 
-int Skin::AttachmentMap::findInBucket(Vector<Entry> &bucket, const String &attachmentName) {
-	for (size_t i = 0; i < bucket.size(); i++)
-		if (bucket[i]._name == attachmentName) return i;
+int Skin::AttachmentMap::findInBucket(Vector<Entry> &bucket, const String &attachmentName,const String & cacheName /*= nullptr*/) {
+    if(cacheName != nullptr)
+    {
+        for (size_t i = 0; i < bucket.size(); i++){
+           if (bucket[i]._name == attachmentName && bucket[i]._cacheName == cacheName) return (int)i;
+        }
+    }
+    else
+    {
+        for (size_t i = 0; i < bucket.size(); i++){
+           if (bucket[i]._name == attachmentName) return (int)i;
+        }
+    }
+	
 	return -1;
 }
 
@@ -196,3 +215,40 @@ Vector<ConstraintData*>& Skin::getConstraints() {
 Vector<BoneData*>& Skin::getBones() {
 	return _bones;
 }
+
+//将替换的组件，加入缓存
+void Skin::addAttachmentToCache (int slotIndex, const String &name, Attachment* attachment, const String &cacheName)
+{
+    assert(attachment);
+    _attachments.put(slotIndex, name, attachment,cacheName);
+}
+
+//缓存中是否存在该组件
+Attachment* Skin::getAttachmentByCache (const String &name)
+{
+    Skin::AttachmentMap::Entries entries = _attachments.getEntries();
+    while (entries.hasNext()) {
+        Skin::AttachmentMap::Entry &entry = entries.next();
+        if (entry._cacheName == name) {
+            return entry._attachment;
+        }
+    }
+    
+    return nullptr;
+}
+
+//激活缓存中的组件
+void Skin::activateAttachmentByCache(const String &name)
+{
+    int i=0;
+    Skin::AttachmentMap::Entries entries = _attachments.getEntries();
+    while (entries.hasNext()) {
+        Skin::AttachmentMap::Entry &entry = entries.next();
+        if (entry._cacheName == name) {
+            break;
+        }
+        i++;
+    }
+    entries.activate(i);
+}
+

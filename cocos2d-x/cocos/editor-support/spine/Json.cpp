@@ -100,6 +100,11 @@ const char *Json::getError() {
 	return _error;
 }
 
+int Json::getCurSize(Json* object)
+{
+    return object->_size;
+}
+
 Json::Json(const char *value) :
 		_next(NULL),
 #if SPINE_JSON_HAVE_PREV

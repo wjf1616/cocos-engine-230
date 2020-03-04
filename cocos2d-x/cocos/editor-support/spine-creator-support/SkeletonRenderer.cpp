@@ -39,6 +39,8 @@
 #include "SkeletonDataMgr.h"
 #include "renderer/gfx/Texture.h"
 #include "spine-creator-support/AttachUtil.h"
+#include "Json.h"
+#include "cocos2d.h"
 
 USING_NS_CC;
 USING_NS_MW;
@@ -126,22 +128,22 @@ void SkeletonRenderer::setSkeletonData (SkeletonData *skeletonData, bool ownsSke
     _ownsSkeletonData = ownsSkeletonData;
 }
 
-SkeletonRenderer::SkeletonRenderer () {
+SkeletonRenderer::SkeletonRenderer ():_hslEnable(false) {
 }
 
-SkeletonRenderer::SkeletonRenderer(Skeleton* skeleton, bool ownsSkeleton, bool ownsSkeletonData, bool ownsAtlas) {
+SkeletonRenderer::SkeletonRenderer(Skeleton* skeleton, bool ownsSkeleton, bool ownsSkeletonData, bool ownsAtlas):_hslEnable(false) {
     initWithSkeleton(skeleton, ownsSkeleton, ownsSkeletonData, ownsAtlas);
 }
 
-SkeletonRenderer::SkeletonRenderer (SkeletonData *skeletonData, bool ownsSkeletonData) {
+SkeletonRenderer::SkeletonRenderer (SkeletonData *skeletonData, bool ownsSkeletonData):_hslEnable(false) {
     initWithData(skeletonData, ownsSkeletonData);
 }
 
-SkeletonRenderer::SkeletonRenderer (const std::string& skeletonDataFile, Atlas* atlas, float scale) {
+SkeletonRenderer::SkeletonRenderer (const std::string& skeletonDataFile, Atlas* atlas, float scale):_hslEnable(false) {
     initWithJsonFile(skeletonDataFile, atlas, scale);
 }
 
-SkeletonRenderer::SkeletonRenderer (const std::string& skeletonDataFile, const std::string& atlasFile, float scale) {
+SkeletonRenderer::SkeletonRenderer (const std::string& skeletonDataFile, const std::string& atlasFile, float scale):_hslEnable(false) {
     initWithJsonFile(skeletonDataFile, atlasFile, scale);
 }
 
@@ -163,6 +165,13 @@ SkeletonRenderer::~SkeletonRenderer () {
     CC_SAFE_RELEASE(_nodeProxy);
     CC_SAFE_RELEASE(_effect);
     stopSchedule();
+    
+    //释放自定义atlas
+    for(auto atlas : this->_changeAttachmentAtlas){
+        delete atlas;
+    }
+    this->_changeAttachmentAtlas.clear();
+    
 }
 
 void SkeletonRenderer::initWithUUID(const std::string& uuid) {
@@ -1089,3 +1098,147 @@ uint32_t SkeletonRenderer::getRenderOrder() const
     if (!_nodeProxy) return 0;
     return _nodeProxy->getRenderOrder();
 }
+
+
+void SkeletonRenderer::setHSLEnable(bool enabled){
+    
+    _hslEnable = enabled;
+}
+
+void SkeletonRenderer::setAttachmentHSLEnable(const std::string& slotName, const std::string& attachmentName,bool enabled){
+    
+    auto targetAttachment = this->getAttachment(slotName,attachmentName);
+    if(targetAttachment == nullptr){
+        return;
+    }
+    
+    targetAttachment->setHslEnable(enabled);
+}
+
+bool SkeletonRenderer::changeAttachmentHSL(const std::string& slotName, const std::string& attachmentName, float colorH, float colorS, float colorL){
+
+    auto targetAttachment = this->getAttachment(slotName,attachmentName);
+    if(targetAttachment == nullptr){
+        return false;
+    }
+    
+    targetAttachment->setHSL(colorH, colorS, colorL);
+    
+    return true;
+}
+
+bool SkeletonRenderer::setAttachmentFromFile(const std::string& slotName, const std::string& atlasFile, const std::string& jsonFile, const char* newAttachmentName){
+    
+    auto skin = _skeleton->getSkinByName(newAttachmentName);
+    if (skin == 0) {
+        return false;
+    }
+    
+    int index = _skeleton->findSlotIndex(slotName.c_str());
+    if (index == -1) {
+        return false;
+    }
+    
+    std::string pAttachmentName = this->getAttachmentCacheKey(atlasFile);
+    if (!pAttachmentName.empty()) {
+        auto pAttachment = skin->getAttachmentByCache(pAttachmentName.c_str());
+        if (pAttachment != 0) {
+            skin->activateAttachmentByCache(pAttachmentName.c_str());
+            return true;
+        }
+    }
+    
+    auto isExistAtlas = FileUtils::getInstance()->isFileExist(atlasFile);
+    if (!isExistAtlas) {
+        CCLOG("SkeletonRenderer::setAttachmentFromFile error: Could not file: %s", atlasFile.c_str());
+        return false;
+    }
+    
+    auto isExistJson = FileUtils::getInstance()->isFileExist(jsonFile);
+    if (!isExistJson) {
+        CCLOG("SkeletonRenderer::setAttachmentFromFile error: Could not file: %s", jsonFile.c_str());
+        return false;
+    }
+    
+    Atlas* atlas = new (__FILE__, __LINE__) Atlas(atlasFile.c_str(), &textureLoader);
+    CCASSERT(atlas, "Error reading atlas file.");
+    
+    this->_changeAttachmentAtlas.push_back(atlas);
+    
+    Cocos2dAtlasAttachmentLoader* atlasAttachmentLoader = new (__FILE__, __LINE__) Cocos2dAtlasAttachmentLoader(_atlas);
+    
+    int dataLength = 0;
+    const char *attachJsonStr = SpineExtension::readFile(jsonFile.c_str(), &dataLength);
+    Json *attachmentMap = new Json(attachJsonStr);
+    
+    const char *attachmentType = Json::getString(attachmentMap, "type", "");
+    std::string attachmentNamtStr = newAttachmentName;
+    if (attachmentNamtStr.empty()) {
+        return false;
+    }
+    size_t indx = attachmentNamtStr.find_last_of("/");
+    std::string newname = attachmentNamtStr.substr(indx+1);
+    
+    Attachment* attachment = nullptr;
+    if(strcmp(attachmentType, "region") == 0){
+        auto regionAttachment = atlasAttachmentLoader->newRegionAttachment(*skin,newname.c_str(),newname.c_str());
+        
+        regionAttachment->setX(Json::getFloat(attachmentMap, "x", 0.0f));
+        regionAttachment->setY(Json::getFloat(attachmentMap, "y", 0.0f));
+        regionAttachment->setScaleX(Json::getFloat(attachmentMap, "scaleX", 1.0f));
+        regionAttachment->setScaleY(Json::getFloat(attachmentMap, "scaleY", 1.0f));
+        regionAttachment->setRotation(Json::getFloat(attachmentMap, "rotation", 0.0f));
+        regionAttachment->setWidth(Json::getFloat(attachmentMap, "width", 0.0f));
+        regionAttachment->setHeight(Json::getFloat(attachmentMap, "height", 0.0f));
+
+        regionAttachment->updateOffset();
+        attachment = regionAttachment;
+        
+    }else if(strcmp(attachmentType, "mesh") == 0){
+        auto meshAttachment = atlasAttachmentLoader->newMeshAttachment(*skin,newname.c_str(),newname.c_str());
+        meshAttachment->setWidth(78);
+        meshAttachment->setHeight(67);
+
+        Json *uvs = Json::getItem(attachmentMap, "uvs");
+        SkeletonJson spineJson(atlasAttachmentLoader);
+        spineJson.readVertices(attachmentMap, meshAttachment, Json::getCurSize(uvs));
+        
+        meshAttachment->setHullLength(Json::getInt(attachmentMap, "hull", 0));
+        meshAttachment->updateUVs();
+        
+        attachment = meshAttachment;
+    }
+    
+    if (skin && attachment != nullptr) {
+        skin->addAttachmentToCache(index,newAttachmentName,attachment,pAttachmentName.c_str());
+        _skeleton->setAttachment(slotName.c_str(),newAttachmentName);
+    }
+    
+    if (attachmentMap != nullptr) {
+        delete attachmentMap;
+        attachmentMap = nullptr;
+    }
+
+    if (attachJsonStr != nullptr) {
+        std::free((void*)attachJsonStr);
+        attachJsonStr = nullptr;
+    }
+    
+    return true;
+}
+
+std::string SkeletonRenderer::getAttachmentCacheKey(const std::string& atlasFile)
+{
+    if (atlasFile.empty()) {
+        return "";
+    }
+    
+    size_t indx1 = atlasFile.find("avatar");
+    size_t indx2 = atlasFile.find_last_of(".");
+    
+    if (indx1 >= indx2 || indx2 == -1) {
+        return atlasFile.substr(indx1);
+    }
+    return atlasFile.substr(indx1,indx2-indx1);
+}
+

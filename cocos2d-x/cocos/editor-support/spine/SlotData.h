@@ -34,6 +34,7 @@
 #include <spine/SpineObject.h>
 #include <spine/SpineString.h>
 #include <spine/Color.h>
+#include <spine/Skin.h>
 
 namespace spine {
 class BoneData;
@@ -73,7 +74,8 @@ class SP_API SlotData : public SpineObject {
 
 public:
 	SlotData(int index, const String &name, BoneData &boneData);
-
+    ~SlotData();
+    
 	int getIndex();
 
 	const String &getName();
@@ -97,6 +99,7 @@ public:
 
 	void setBlendMode(BlendMode inValue);
 
+    Skin* getCustomSkin();
 private:
 	const int _index;
 	String _name;
@@ -107,6 +110,8 @@ private:
 	bool _hasDarkColor;
 	String _attachmentName;
 	BlendMode _blendMode;
+    
+    Skin* _customSkin;
 };
 }
 

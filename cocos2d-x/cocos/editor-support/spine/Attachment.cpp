@@ -39,7 +39,14 @@ using namespace spine;
 
 RTTI_IMPL_NOPARENT(Attachment)
 
-Attachment::Attachment(const String &name) : _name(name), _refCount(0) {
+Attachment::Attachment(const String &name)
+: _name(name)
+, _refCount(0)
+, hslEnable(false)
+, colorH(0.0f)
+, colorS(0.0f)
+, colorL(0.0f)
+{
 	assert(_name.length() > 0);
 }
 
@@ -60,4 +67,36 @@ void Attachment::reference() {
 
 void Attachment::dereference() {
 	_refCount--;
+}
+
+void Attachment::setHslEnable(bool enable)
+{
+    hslEnable = enable;
+}
+
+bool Attachment::getHslEnable()
+{
+    return hslEnable;
+}
+
+void Attachment::setHSL(int h, int s, int l)
+{
+    colorH = h;
+    colorS = s;
+    colorL = l;
+}
+
+float Attachment::getH()
+{
+    return colorH;
+}
+
+float Attachment::getS()
+{
+    return colorS;
+}
+
+float Attachment::getL()
+{
+    return colorL;
 }

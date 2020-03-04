@@ -70,7 +70,7 @@ public:
 
 	~Json();
 
-
+    static int getCurSize(Json* object);
 
 private:
 	static const char *_error;

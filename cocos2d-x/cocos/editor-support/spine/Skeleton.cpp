@@ -341,7 +341,21 @@ Attachment *Skeleton::getAttachment(const String &slotName, const String &attach
 
 Attachment *Skeleton::getAttachment(int slotIndex, const String &attachmentName) {
 	assert(attachmentName.length() > 0);
-
+    
+    //先从自定义skin中查找
+    if (slotIndex < _slots.size() && slotIndex >= 0) {
+        Slot* pSlot = _slots[slotIndex];
+        if (pSlot) {
+            Skin* customSkin = pSlot->getData().getCustomSkin();
+            if (customSkin != NULL) {
+                Attachment *attachment = customSkin->getAttachment(slotIndex, attachmentName);
+                if (attachment != NULL) {
+                    return attachment;
+                }
+            }
+        }
+    }
+    
 	if (_skin != NULL) {
 		Attachment *attachment = _skin->getAttachment(slotIndex, attachmentName);
 		if (attachment != NULL) {
@@ -504,6 +518,11 @@ Vector<TransformConstraint *> &Skeleton::getTransformConstraints() {
 
 Skin *Skeleton::getSkin() {
 	return _skin;
+}
+
+Skin *Skeleton::getSkinByName(const char* partName)
+{
+    return nullptr;
 }
 
 Color &Skeleton::getColor() {
