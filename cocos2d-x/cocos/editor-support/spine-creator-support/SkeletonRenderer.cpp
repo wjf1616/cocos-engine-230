@@ -1129,8 +1129,8 @@ bool SkeletonRenderer::changeAttachmentHSL(const std::string& slotName, const st
 
 bool SkeletonRenderer::setAttachmentFromFile(const std::string& slotName, const std::string& atlasFile, const std::string& jsonFile, const char* newAttachmentName){
     
-    auto skin = _skeleton->getSkinByName(newAttachmentName);
-    if (skin == 0) {
+    auto skin = _skeleton->getCustomSkin(newAttachmentName);
+    if (skin == nullptr) {
         return false;
     }
     

@@ -520,8 +520,16 @@ Skin *Skeleton::getSkin() {
 	return _skin;
 }
 
-Skin *Skeleton::getSkinByName(const char* partName)
+Skin *Skeleton::getCustomSkin(const char* partName)
 {
+    for (size_t i = 0, n = _slots.size(); i < n; ++i)
+    {
+        Slot *pSlot = _slots[i];
+        if (pSlot && pSlot->getAttachment()->getName() == partName) {
+            return pSlot->getData().getCustomSkin();
+        }
+    }
+    
     return nullptr;
 }
 

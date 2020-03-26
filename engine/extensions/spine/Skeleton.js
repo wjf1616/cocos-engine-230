@@ -1345,42 +1345,7 @@ sp.Skeleton = cc.Class({
             this._debugRenderer.node.parent = null;
         }
     },
-    getSkeleton: function () {
-        if (this._sgNode) {
-            return this._sgNode.getSkeleton();
-        }
-    },
-
-    setAttachmentFromFile: function(slotName, atlas, jsonFile, newAttachmentName){
-
-        if (this._sgNode){
-
-            return this._sgNode.setAttachmentFromFile(slotName, atlas, jsonFile, newAttachmentName);
-        }
-        return null;
-    },
-
-    setHSLEnable: function(enabled){
-
-        if (this._sgNode){
-            this._sgNode.setHSLEnable(enabled);
-        }
-    },
-
-    setAttachmentHSLEnable: function(slotName, attachmentName, enabled){
-
-        if(this._sgNode){
-            this._sgNode.setAttachmentHSLEnable(slotName, attachmentName, enabled);
-        }
-        
-    },
-
-    changeAttachmentHSL: function(slotName, attachmentName, colorH, colorS, colorL){
-        if (this._sgNode){
-            return this._sgNode.changeAttachmentHSL(slotName, attachmentName, colorH, colorS, colorL);
-        }
-        return false;
-    },
+    
 });
 
 module.exports = sp.Skeleton;
