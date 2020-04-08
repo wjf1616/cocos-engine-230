@@ -1345,7 +1345,13 @@ sp.Skeleton = cc.Class({
             this._debugRenderer.node.parent = null;
         }
     },
-    
+
+    getSkeleton: function () {
+        if (this._skeleton) {
+            return this._skeleton.getSkeleton();
+        }
+    },
+
 });
 
 module.exports = sp.Skeleton;

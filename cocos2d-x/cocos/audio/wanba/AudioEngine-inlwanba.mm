@@ -78,7 +78,7 @@ void AudioEngineInlWanba::setFinishCallback(int audioID, const std::function<voi
     //do nothing
 }
 
-cocos2d::experimental::AudioCache* AudioEngineInlWanba::preload(const std::string& filePath, std::function<void(bool)> callback) {
+cocos2d::AudioCache* AudioEngineInlWanba::preload(const std::string& filePath, std::function<void(bool)> callback) {
     [[AudioEngineWanbaImpl shareInstance] preload:[NSString stringWithCString:filePath.c_str() encoding:NSUTF8StringEncoding]];
     return nullptr;
 }
