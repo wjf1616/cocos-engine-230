@@ -79,7 +79,12 @@ let _x, _y, _m00, _m04, _m12, _m01, _m05, _m13;
 let _r, _g, _b, _fr, _fg, _fb, _fa, _dr, _dg, _db, _da;
 let _comp, _buffer, _renderer, _node, _needColor, _vertexEffect;
 
-function _getSlotMaterial (tex, blendMode) {
+function _getSlotMaterial (tex, blendMode, materialIndex) {
+    //自定义材质序号
+    if (!materialIndex) {
+        materialIndex = 0;
+    }
+
     let src, dst;
     switch (blendMode) {
         case spine.BlendMode.Additive:
@@ -100,13 +105,18 @@ function _getSlotMaterial (tex, blendMode) {
             dst = cc.macro.ONE_MINUS_SRC_ALPHA;
             break;
     }
+    
+    //自定义材质序号
+    if (_comp._materials.length <= materialIndex) {
+        materialIndex = 0;
+    }
 
     let useModel = !_comp.enableBatch;
-    let baseMaterial = _comp._materials[0];
+    let baseMaterial = _comp._materials[materialIndex];
     if (!baseMaterial) return null;
 
     // The key use to find corresponding material
-    let key = tex.getId() + src + dst + _useTint + useModel;
+    let key = tex.getId() + src + dst + _useTint + useModel + materialIndex;
     let materialCache = _comp._materialCache;
     let material = materialCache[key];
     if (!material) {
@@ -358,11 +368,24 @@ export default class SpineAssembler extends Assembler {
                 clipper.clipEndWithSlot(slot);
                 continue;
             }
+            
+            //自定义材质序号
+            let materialIndex = 0;
+            if (attachment._materialIndex) {
+                materialIndex = attachment._materialIndex;
+            }
 
-            material = _getSlotMaterial(attachment.region.texture._texture, slot.data.blendMode);
+            material = _getSlotMaterial(attachment.region.texture._texture, slot.data.blendMode, materialIndex);
             if (!material) {
                 clipper.clipEndWithSlot(slot);
                 continue;
+            }
+
+            //hsl自定义材质
+            if (materialIndex == 1 && attachment._colorH != undefined && 
+                attachment._colorS != undefined && attachment._colorL != undefined) {
+                var _colorArray = new Float32Array([attachment._colorH,attachment._colorS,attachment._colorL,1]);
+                material.setProperty("hsl",_colorArray,void 0,true);
             }
 
             if (_mustFlush || material.getHash() !== _renderer.material.getHash()) {
