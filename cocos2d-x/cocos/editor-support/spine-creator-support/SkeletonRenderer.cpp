@@ -1144,6 +1144,7 @@ bool SkeletonRenderer::setAttachmentFromFile(const std::string& slotName, const 
         auto pAttachment = skin->getAttachmentByCache(pAttachmentName.c_str());
         if (pAttachment != 0) {
             skin->activateAttachmentByCache(pAttachmentName.c_str());
+            _skeleton->setAttachment(slotName.c_str(),newAttachmentName);
             return true;
         }
     }
@@ -1237,7 +1238,7 @@ std::string SkeletonRenderer::getAttachmentCacheKey(const std::string& atlasFile
     size_t indx2 = atlasFile.find_last_of(".");
     
     if (indx1 >= indx2 || indx2 == -1) {
-        return atlasFile.substr(indx1);
+        return atlasFile;
     }
     return atlasFile.substr(indx1,indx2-indx1);
 }

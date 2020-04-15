@@ -525,8 +525,11 @@ Skin *Skeleton::getCustomSkin(const char* partName)
     for (size_t i = 0, n = _slots.size(); i < n; ++i)
     {
         Slot *pSlot = _slots[i];
-        if (pSlot && pSlot->getAttachment()->getName() == partName) {
-            return pSlot->getData().getCustomSkin();
+        if (pSlot) {
+            auto attachment = pSlot->getAttachment();
+            if (attachment && attachment->getName() == partName) {
+                return pSlot->getData().getCustomSkin();
+            }
         }
     }
     
