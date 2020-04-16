@@ -42,10 +42,10 @@ RTTI_IMPL_NOPARENT(Attachment)
 Attachment::Attachment(const String &name)
 : _name(name)
 , _refCount(0)
-, hslEnable(false)
-, colorH(0.0f)
-, colorS(0.0f)
-, colorL(0.0f)
+, _materialIndex(0)
+, _colorH(0.0f)
+, _colorS(0.0f)
+, _colorL(0.0f)
 {
 	assert(_name.length() > 0);
 }
@@ -69,34 +69,37 @@ void Attachment::dereference() {
 	_refCount--;
 }
 
-void Attachment::setHslEnable(bool enable)
+void Attachment::setMaterialIndex(int i)
 {
-    hslEnable = enable;
+    if (i < 0) {
+        i = 0;
+    }
+    _materialIndex = i;
 }
 
-bool Attachment::getHslEnable()
+bool Attachment::getMaterialIndex()
 {
-    return hslEnable;
+    return _materialIndex;
 }
 
 void Attachment::setHSL(int h, int s, int l)
 {
-    colorH = h;
-    colorS = s;
-    colorL = l;
+    _colorH = h;
+    _colorS = s;
+    _colorL = l;
 }
 
 float Attachment::getH()
 {
-    return colorH;
+    return _colorH;
 }
 
 float Attachment::getS()
 {
-    return colorS;
+    return _colorS;
 }
 
 float Attachment::getL()
 {
-    return colorL;
+    return _colorL;
 }

@@ -175,21 +175,16 @@ namespace spine {
         RealTimeAttachUtil* _attachUtil = nullptr;
         
     public:
-        void setHSLEnable(bool enabled);
+        bool setAttachmentHSL(const std::string& slotName, const std::string& attachmentName,float colorH, float colorS, float colorL);
         void setAttachmentHSLEnable(const std::string& slotName, const std::string& attachmentName,bool enabled);
         
         bool setAttachmentFromFile(const std::string& slotName, const std::string& atlasFile,
                                    const std::string& jsonFile, const char* newAttachmentName);
             
-        bool changeAttachmentHSL(const std::string& slotName, const std::string& attachmentName,
-                                 float colorH, float colorS, float colorL);
-        
     private:
         //获取组件的缓存key值
         std::string getAttachmentCacheKey(const std::string& atlasFile);
         std::vector<Atlas*> _changeAttachmentAtlas;
-        bool _hslEnable;
-        
     };
 
 }

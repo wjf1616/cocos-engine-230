@@ -51,8 +51,8 @@ public:
 	void reference();
 	void dereference();
 
-    void setHslEnable(bool enable);
-    bool getHslEnable();
+    void setMaterialIndex(int i);
+    bool getMaterialIndex();
     
     void setHSL(int h, int s, int l);
     float getH();
@@ -62,10 +62,10 @@ private:
 	const String _name;
 	int _refCount;
     
-    bool hslEnable;
-    float colorH;
-    float colorS;
-    float colorL;
+    int _materialIndex;
+    float _colorH;
+    float _colorS;
+    float _colorL;
 };
 }
 

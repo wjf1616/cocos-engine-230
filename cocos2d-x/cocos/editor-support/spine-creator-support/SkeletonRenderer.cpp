@@ -128,22 +128,22 @@ void SkeletonRenderer::setSkeletonData (SkeletonData *skeletonData, bool ownsSke
     _ownsSkeletonData = ownsSkeletonData;
 }
 
-SkeletonRenderer::SkeletonRenderer ():_hslEnable(false) {
+SkeletonRenderer::SkeletonRenderer () {
 }
 
-SkeletonRenderer::SkeletonRenderer(Skeleton* skeleton, bool ownsSkeleton, bool ownsSkeletonData, bool ownsAtlas):_hslEnable(false) {
+SkeletonRenderer::SkeletonRenderer(Skeleton* skeleton, bool ownsSkeleton, bool ownsSkeletonData, bool ownsAtlas) {
     initWithSkeleton(skeleton, ownsSkeleton, ownsSkeletonData, ownsAtlas);
 }
 
-SkeletonRenderer::SkeletonRenderer (SkeletonData *skeletonData, bool ownsSkeletonData):_hslEnable(false) {
+SkeletonRenderer::SkeletonRenderer (SkeletonData *skeletonData, bool ownsSkeletonData) {
     initWithData(skeletonData, ownsSkeletonData);
 }
 
-SkeletonRenderer::SkeletonRenderer (const std::string& skeletonDataFile, Atlas* atlas, float scale):_hslEnable(false) {
+SkeletonRenderer::SkeletonRenderer (const std::string& skeletonDataFile, Atlas* atlas, float scale) {
     initWithJsonFile(skeletonDataFile, atlas, scale);
 }
 
-SkeletonRenderer::SkeletonRenderer (const std::string& skeletonDataFile, const std::string& atlasFile, float scale):_hslEnable(false) {
+SkeletonRenderer::SkeletonRenderer (const std::string& skeletonDataFile, const std::string& atlasFile, float scale) {
     initWithJsonFile(skeletonDataFile, atlasFile, scale);
 }
 
@@ -164,6 +164,7 @@ SkeletonRenderer::~SkeletonRenderer () {
     CC_SAFE_RELEASE(_attachUtil);
     CC_SAFE_RELEASE(_nodeProxy);
     CC_SAFE_RELEASE(_effect);
+    
     stopSchedule();
     
     //释放自定义atlas
@@ -285,24 +286,24 @@ void SkeletonRenderer::render (float deltaTime) {
     
     _nodeColor.a = _nodeProxy->getRealOpacity() / (float)255;
     
-	// If opacity is 0,then return.
+    // If opacity is 0,then return.
     if (_skeleton->getColor().a == 0) {
         return;
     }
-	
-	// color range is [0.0, 1.0]
+    
+    // color range is [0.0, 1.0]
     Color4F color;
     Color4F darkColor;
     AttachmentVertices* attachmentVertices = nullptr;
     bool inRange = _startSlotIndex != -1 || _endSlotIndex != -1 ? false : true;
     auto vertexFormat = _useTint? VF_XYUVCC : VF_XYUVC;
-	middleware::MeshBuffer* mb = mgr->getMeshBuffer(vertexFormat);
+    middleware::MeshBuffer* mb = mgr->getMeshBuffer(vertexFormat);
     middleware::IOBuffer& vb = mb->getVB();
     middleware::IOBuffer& ib = mb->getIB();
     
     // vertex size int bytes with one color
     int vbs1 = sizeof(V2F_T2F_C4B);
-	// vertex size in floats with one color
+    // vertex size in floats with one color
     int vs1 = vbs1 / sizeof(float);
     // vertex size int bytes with two color
     int vbs2 = sizeof(V2F_T2F_C4B_C4B);
@@ -310,7 +311,7 @@ void SkeletonRenderer::render (float deltaTime) {
     int vs2 = vbs2 / sizeof(float);
     const cocos2d::Mat4& nodeWorldMat = _nodeProxy->getWorldMatrix();
     
-	int vbSize = 0;
+    int vbSize = 0;
     int ibSize = 0;
 
     BlendFactor curBlendSrc = BlendFactor::ONE;
@@ -320,13 +321,13 @@ void SkeletonRenderer::render (float deltaTime) {
     GLuint preTextureIndex = -1;
     GLuint curTextureIndex = -1;
     
-	int preISegWritePos = -1;
+    int preISegWritePos = -1;
     int curISegLen = 0;
     
     int materialLen = 0;
     Slot* slot = nullptr;
     int isFull = 0;
-    
+
     middleware::Texture2D* texture = nullptr;
     
     if (_debugSlots || _debugBones || _debugMesh) {
@@ -389,7 +390,7 @@ void SkeletonRenderer::render (float deltaTime) {
         }
 
         renderEffect->updateHash(curHash);
-		
+        
         // save new segment count pos field
         preISegWritePos = (int)ib.getCurPos() / sizeof(unsigned short);
         // save new segment vb and ib
@@ -402,6 +403,7 @@ void SkeletonRenderer::render (float deltaTime) {
         curISegLen = 0;
         // material length increased
         materialLen++;
+        
     };
     
     VertexEffect* effect = nullptr;
@@ -504,7 +506,7 @@ void SkeletonRenderer::render (float deltaTime) {
         } else if (slot->getAttachment()->getRTTI().isExactly(MeshAttachment::rtti)) {
             MeshAttachment* attachment = (MeshAttachment*)slot->getAttachment();
             attachmentVertices = (AttachmentVertices*)attachment->getRendererObject();
-            
+        
             // Early exit if attachment is invisible
             if (attachment->getColor().a == 0) {
                 _clipper->clipEnd(*slot);
@@ -855,8 +857,8 @@ void SkeletonRenderer::render (float deltaTime) {
     
     if (effect) effect->end();
     
-	if (preISegWritePos != -1) {
-		assembler->updateIARange(materialLen - 1, preISegWritePos, curISegLen);
+    if (preISegWritePos != -1) {
+        assembler->updateIARange(materialLen - 1, preISegWritePos, curISegLen);
     }
 
     if (_debugBones) {
@@ -1099,23 +1101,16 @@ uint32_t SkeletonRenderer::getRenderOrder() const
     return _nodeProxy->getRenderOrder();
 }
 
-
-void SkeletonRenderer::setHSLEnable(bool enabled){
-    
-    _hslEnable = enabled;
-}
-
 void SkeletonRenderer::setAttachmentHSLEnable(const std::string& slotName, const std::string& attachmentName,bool enabled){
-    
     auto targetAttachment = this->getAttachment(slotName,attachmentName);
     if(targetAttachment == nullptr){
         return;
     }
     
-    targetAttachment->setHslEnable(enabled);
+    targetAttachment->setMaterialIndex(enabled?1:0);
 }
 
-bool SkeletonRenderer::changeAttachmentHSL(const std::string& slotName, const std::string& attachmentName, float colorH, float colorS, float colorL){
+bool SkeletonRenderer::setAttachmentHSL(const std::string& slotName, const std::string& attachmentName, float colorH, float colorS, float colorL){
 
     auto targetAttachment = this->getAttachment(slotName,attachmentName);
     if(targetAttachment == nullptr){
