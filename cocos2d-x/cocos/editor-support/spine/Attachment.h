@@ -54,7 +54,7 @@ public:
     void setHslEnable(bool isEnable);
     bool IsHslEnable();
     
-    void setHSL(int h, int s, int l);
+    void setHSL(float h, float s, float l);
     float getH();
     float getS();
     float getL();

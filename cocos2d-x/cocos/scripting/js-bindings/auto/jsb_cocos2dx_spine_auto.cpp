@@ -13032,28 +13032,6 @@ static bool js_cocos2dx_spine_SkeletonRenderer_setAttachment(se::State& s)
 }
 SE_BIND_FUNC(js_cocos2dx_spine_SkeletonRenderer_setAttachment)
 
-static bool js_cocos2dx_spine_SkeletonRenderer_setHSLEnable(se::State& s)
-{
-    spine::SkeletonRenderer* cobj = (spine::SkeletonRenderer*)s.nativeThisObject();
-    SE_PRECONDITION2( cobj, false, "js_cocos2dx_spine_SkeletonRenderer_setHSLEnable : Invalid Native Object");
-    
-    const auto& args = s.args();
-    size_t argc = args.size();
-    CC_UNUSED bool ok = true;
-    if (argc == 1) {
-        bool arg0;
-        ok &= seval_to_boolean(args[0], &arg0);
-
-        cobj->setHSLEnable(arg0);
-        
-        return true;
-    }
-
-    SE_REPORT_ERROR("wrong number of arguments: %d, was expecting %d", (int)argc, 1);
-    return false;
-}
-SE_BIND_FUNC(js_cocos2dx_spine_SkeletonRenderer_setHSLEnable)
-
 static bool js_cocos2dx_spine_SkeletonRenderer_setAttachmentHSLEnable(se::State& s)
 {
     CC_UNUSED bool ok = true;
@@ -13083,11 +13061,11 @@ static bool js_cocos2dx_spine_SkeletonRenderer_setAttachmentHSLEnable(se::State&
 }
 SE_BIND_FUNC(js_cocos2dx_spine_SkeletonRenderer_setAttachmentHSLEnable)
 
-static bool js_cocos2dx_spine_SkeletonRenderer_changeAttachmentHSL(se::State& s)
+static bool js_cocos2dx_spine_SkeletonRenderer_setAttachmentHSL(se::State& s)
 {
     CC_UNUSED bool ok = true;
     spine::SkeletonRenderer* cobj = (spine::SkeletonRenderer*)s.nativeThisObject();
-    SE_PRECONDITION2( cobj, false, "js_cocos2dx_spine_SkeletonRenderer_changeAttachmentHSL : Invalid Native Object");
+    SE_PRECONDITION2( cobj, false, "js_cocos2dx_spine_SkeletonRenderer_setAttachmentHSL : Invalid Native Object");
     const auto& args = s.args();
     size_t argc = args.size();
     do {
@@ -13102,9 +13080,9 @@ static bool js_cocos2dx_spine_SkeletonRenderer_changeAttachmentHSL(se::State& s)
             
             if (!ok) { ok = true; break; }
  
-            bool result = cobj->changeAttachmentHSL(arg0, arg1, arg2, arg3, arg4);
+            bool result = cobj->setAttachmentHSL(arg0, arg1, arg2, arg3, arg4);
             ok &= boolean_to_seval(result, &s.rval());
-            SE_PRECONDITION2(ok, false, "js_cocos2dx_spine_SkeletonRenderer_changeAttachmentHSL : Error processing arguments");
+            SE_PRECONDITION2(ok, false, "js_cocos2dx_spine_SkeletonRenderer_setAttachmentHSL : Error processing arguments");
             return true;
         }
     } while(false);
@@ -13112,7 +13090,7 @@ static bool js_cocos2dx_spine_SkeletonRenderer_changeAttachmentHSL(se::State& s)
     SE_REPORT_ERROR("wrong number of arguments: %d", (int)argc);
     return false;
 }
-SE_BIND_FUNC(js_cocos2dx_spine_SkeletonRenderer_changeAttachmentHSL)
+SE_BIND_FUNC(js_cocos2dx_spine_SkeletonRenderer_setAttachmentHSL)
 
 static bool js_cocos2dx_spine_SkeletonRenderer_setAttachmentFromFile(se::State& s)
 {
@@ -14033,9 +14011,8 @@ bool js_register_cocos2dx_spine_SkeletonRenderer(se::Object* obj)
     cls->defineFunction("paused", _SE(js_cocos2dx_spine_SkeletonRenderer_paused));
     cls->defineFunction("setAttachment", _SE(js_cocos2dx_spine_SkeletonRenderer_setAttachment));
     cls->defineFunction("setAttachmentFromFile", _SE(js_cocos2dx_spine_SkeletonRenderer_setAttachmentFromFile));
-    cls->defineFunction("setHSLEnable", _SE(js_cocos2dx_spine_SkeletonRenderer_setHSLEnable));
     cls->defineFunction("setAttachmentHSLEnable", _SE(js_cocos2dx_spine_SkeletonRenderer_setAttachmentHSLEnable));
-    cls->defineFunction("changeAttachmentHSL", _SE(js_cocos2dx_spine_SkeletonRenderer_changeAttachmentHSL));
+    cls->defineFunction("setAttachmentHSL", _SE(js_cocos2dx_spine_SkeletonRenderer_setAttachmentHSL));
     cls->defineFunction("setBonesToSetupPose", _SE(js_cocos2dx_spine_SkeletonRenderer_setBonesToSetupPose));
     cls->defineFunction("onEnable", _SE(js_cocos2dx_spine_SkeletonRenderer_onEnable));
     cls->defineFunction("setEffect", _SE(js_cocos2dx_spine_SkeletonRenderer_setEffect));

@@ -79,7 +79,7 @@ bool Attachment::IsHslEnable()
     return _hslEnable;
 }
 
-void Attachment::setHSL(int h, int s, int l)
+void Attachment::setHSL(float h, float s, float l)
 {
     _colorH = h;
     _colorS = s;

@@ -275,7 +275,7 @@ bool std_string_to_seval(const std::string& v, se::Value* ret);
 
 bool Vec2_to_seval(const cocos2d::Vec2& v, se::Value* ret);
 bool Vec3_to_seval(const cocos2d::Vec3& v, se::Value* ret);
-bool Vec4_to_seval(const cocos2d::Vec4& v, se::Value* ret);
+bool Vec4_to_seval(const cocos2d::Vec4& v, se::Value* ret, bool isTypedArray = false);
 bool Mat4_to_seval(const cocos2d::Mat4& v, se::Value* ret);
 bool Size_to_seval(const cocos2d::Size& v, se::Value* ret);
 bool Rect_to_seval(const cocos2d::Rect& v, se::Value* ret);

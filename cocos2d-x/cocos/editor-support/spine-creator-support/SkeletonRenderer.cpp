@@ -41,6 +41,7 @@
 #include "spine-creator-support/AttachUtil.h"
 #include "Json.h"
 #include "cocos2d.h"
+#include "jsb_conversions.hpp"
 
 USING_NS_CC;
 USING_NS_MW;
@@ -327,7 +328,10 @@ void SkeletonRenderer::render (float deltaTime) {
     int materialLen = 0;
     Slot* slot = nullptr;
     int isFull = 0;
-
+    
+    bool preHslEnable = false;
+    bool curHslEnable = false;
+    
     middleware::Texture2D* texture = nullptr;
     
     if (_debugSlots || _debugBones || _debugMesh) {
@@ -338,7 +342,7 @@ void SkeletonRenderer::render (float deltaTime) {
         _debugBuffer->reset();
     }
     
-    auto flush = [&]() {
+    auto flush = [&]()->EffectVariant* {
         // fill pre segment count field
         if (preISegWritePos != -1) {
             assembler->updateIARange(materialLen - 1, preISegWritePos, curISegLen);
@@ -404,6 +408,7 @@ void SkeletonRenderer::render (float deltaTime) {
         // material length increased
         materialLen++;
         
+        return renderEffect;
     };
     
     VertexEffect* effect = nullptr;
@@ -445,11 +450,17 @@ void SkeletonRenderer::render (float deltaTime) {
         
         Triangles triangles;
         TwoColorTriangles trianglesTwoColor;
+        Vec4 hslColor = Vec4::UNIT_W;
         
         if (slot->getAttachment()->getRTTI().isExactly(RegionAttachment::rtti)) {
             RegionAttachment* attachment = (RegionAttachment*)slot->getAttachment();
             attachmentVertices = (AttachmentVertices*)attachment->getRendererObject();
-
+            
+            curHslEnable = attachment->IsHslEnable();
+            if (curHslEnable) {
+                hslColor.set(attachment->getH(), attachment->getS(), attachment->getL(), 1.0);
+            }
+            
             // Early exit if attachment is invisible
             if (attachment->getColor().a == 0) {
                 _clipper->clipEnd(*slot);
@@ -506,7 +517,12 @@ void SkeletonRenderer::render (float deltaTime) {
         } else if (slot->getAttachment()->getRTTI().isExactly(MeshAttachment::rtti)) {
             MeshAttachment* attachment = (MeshAttachment*)slot->getAttachment();
             attachmentVertices = (AttachmentVertices*)attachment->getRendererObject();
-        
+            
+            curHslEnable = attachment->IsHslEnable();
+            if (curHslEnable) {
+                hslColor.set(attachment->getH(), attachment->getS(), attachment->getL(), 1.0);
+            }
+            
             // Early exit if attachment is invisible
             if (attachment->getColor().a == 0) {
                 _clipper->clipEnd(*slot);
@@ -809,9 +825,27 @@ void SkeletonRenderer::render (float deltaTime) {
         
         texture = attachmentVertices->_texture;
         curTextureIndex = attachmentVertices->_texture->getNativeTexture()->getHandle();
+        
         // If texture or blendMode change,will change material.
-        if (preTextureIndex != curTextureIndex || preBlendMode != slot->getData().getBlendMode() || isFull) {
-            flush();
+        if (preTextureIndex != curTextureIndex ||
+            preBlendMode != slot->getData().getBlendMode() ||
+            isFull ||
+            preHslEnable != curHslEnable) {
+            
+            EffectVariant* pEffect = flush();
+            if (pEffect) {
+                pEffect->define("USE_HSL", Value(curHslEnable));
+                
+                if (curHslEnable) {
+                    se::Value hslValue;
+                    Vec4_to_seval(hslColor,&hslValue,true);
+                    
+                    std::string key = "hsl";
+                    seval_to_Effect_setProperty(key,hslValue,pEffect,0,true);
+                }
+            }
+            
+            preHslEnable = curHslEnable;
         }
         
         if (vbSize > 0 && ibSize > 0) {

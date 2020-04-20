@@ -947,9 +947,8 @@ SE_DECLARE_FUNC(js_cocos2dx_spine_SkeletonRenderer_setVertexEffectDelegate);
 SE_DECLARE_FUNC(js_cocos2dx_spine_SkeletonRenderer_SkeletonRenderer);
 
 SE_DECLARE_FUNC(js_cocos2dx_spine_SkeletonRenderer_setAttachmentFromFile);
-SE_DECLARE_FUNC(js_cocos2dx_spine_SkeletonRenderer_setHSLEnable);
 SE_DECLARE_FUNC(js_cocos2dx_spine_SkeletonRenderer_setAttachmentHSLEnable);
-SE_DECLARE_FUNC(js_cocos2dx_spine_SkeletonRenderer_changeAttachmentHSL);
+SE_DECLARE_FUNC(js_cocos2dx_spine_SkeletonRenderer_setAttachmentHSL);
 
 extern se::Object* __jsb_spine_SkeletonAnimation_proto;
 extern se::Class* __jsb_spine_SkeletonAnimation_class;

@@ -2305,16 +2305,26 @@ bool Vec3_to_seval(const cocos2d::Vec3& v, se::Value* ret)
     return true;
 }
 
-bool Vec4_to_seval(const cocos2d::Vec4& v, se::Value* ret)
+bool Vec4_to_seval(const cocos2d::Vec4& v, se::Value* ret, bool isTypedArray/* = false*/)
 {
     assert(ret != nullptr);
-    se::HandleObject obj(se::Object::createPlainObject());
-    obj->setProperty("x", se::Value(v.x));
-    obj->setProperty("y", se::Value(v.y));
-    obj->setProperty("z", se::Value(v.z));
-    obj->setProperty("w", se::Value(v.w));
-    ret->setObject(obj);
-
+    if(!isTypedArray)
+    {
+        se::HandleObject obj(se::Object::createPlainObject());
+        obj->setProperty("x", se::Value(v.x));
+        obj->setProperty("y", se::Value(v.y));
+        obj->setProperty("z", se::Value(v.z));
+        obj->setProperty("w", se::Value(v.w));
+        ret->setObject(obj);
+    }
+    else
+    {
+        float vertexAttrib[4] = {v.x,v.y,v.z,v.w};
+        se::Object* arr = se::Object::createTypedArray(se::Object::TypedArrayType::FLOAT32, vertexAttrib, sizeof(vertexAttrib));
+        se::HandleObject obj(arr);
+        
+        ret->setObject(obj);
+    }
     return true;
 }
 
