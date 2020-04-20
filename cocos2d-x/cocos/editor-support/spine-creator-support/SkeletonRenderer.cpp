@@ -1107,7 +1107,7 @@ void SkeletonRenderer::setAttachmentHSLEnable(const std::string& slotName, const
         return;
     }
     
-    targetAttachment->setMaterialIndex(enabled?1:0);
+    targetAttachment->setHslEnable(enabled);
 }
 
 bool SkeletonRenderer::setAttachmentHSL(const std::string& slotName, const std::string& attachmentName, float colorH, float colorS, float colorL){
