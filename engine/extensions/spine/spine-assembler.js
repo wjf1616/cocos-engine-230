@@ -384,7 +384,7 @@ export default class SpineAssembler extends Assembler {
             //hsl自定义材质
             if (materialIndex == 1 && attachment._colorH != undefined && 
                 attachment._colorS != undefined && attachment._colorL != undefined) {
-                var _colorArray = new Float32Array([attachment._colorH,attachment._colorS,attachment._colorL,1]);
+                let _colorArray = new cc.Vec4(attachment._colorH,attachment._colorS,attachment._colorL,1);
                 material.setProperty("hsl",_colorArray,void 0,true);
             }
 
