@@ -367,8 +367,10 @@ export default class SpineAssembler extends Assembler {
 
             //启用宏定义
             let useHsl = attachment._hslEnable ? true : false;
-            material.define('USE_HSL', useHsl);
-
+            if (material.getDefine('USE_HSL',0) != undefined) {
+                material.define('USE_HSL', useHsl);
+            }
+            
             if (useHsl && attachment._colorH != undefined && 
                 attachment._colorS != undefined && attachment._colorL != undefined) {
                 let _colorArray = new cc.Vec4(attachment._colorH,attachment._colorS,attachment._colorL,1);

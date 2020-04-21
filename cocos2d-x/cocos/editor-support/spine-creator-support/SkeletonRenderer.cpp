@@ -834,7 +834,9 @@ void SkeletonRenderer::render (float deltaTime) {
             
             EffectVariant* pEffect = flush();
             if (pEffect) {
-                pEffect->define("USE_HSL", Value(curHslEnable));
+                if (pEffect->getDefine("USE_HSL") != nullptr) {
+                    pEffect->define("USE_HSL", Value(curHslEnable));
+                }
                 
                 if (curHslEnable) {
                     se::Value hslValue;
