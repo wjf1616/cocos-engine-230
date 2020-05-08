@@ -77,6 +77,7 @@ public:
     virtual void _updateColor() override;
     void updateWorldMatrix();
     cocos2d::middleware::Texture2D* getTexture() const;
+    void setSpriteFrame(cocos2d::middleware::Texture2D* texture);
 protected:
     virtual void _updateFrame() override;
     virtual void _updateMesh() override;

@@ -6216,6 +6216,26 @@ static bool js_cocos2dx_dragonbones_CCSlot_updateWorldMatrix(se::State& s)
 }
 SE_BIND_FUNC(js_cocos2dx_dragonbones_CCSlot_updateWorldMatrix)
 
+static bool js_cocos2dx_dragonbones_CCSlot_setSpriteFrame(se::State& s)
+{
+   dragonBones::CCSlot* cobj = (dragonBones::CCSlot*)s.nativeThisObject();
+    SE_PRECONDITION2(cobj, false, "js_cocos2dx_dragonbones_CCSlot_setSpriteFrame : Invalid Native Object");
+    const auto& args = s.args();
+    size_t argc = args.size();
+    CC_UNUSED bool ok = true;
+    if (argc == 1) {
+        cocos2d::renderer::Texture* arg0 = nullptr;
+        ok &= seval_to_native_ptr(args[0], &arg0);
+        SE_PRECONDITION2(ok, false, "js_cocos2dx_dragonbones_CCSlot_setSpriteFrame : Error processing arguments");
+        cocos2d::middleware::Texture2D *texture = new cocos2d::middleware::Texture2D();
+        texture->setNativeTexture(arg0);
+        cobj->setSpriteFrame(texture);
+        return true;
+    }
+    SE_REPORT_ERROR("wrong number of arguments: %d, was expecting %d", (int)argc, 1);
+    return false;
+}
+SE_BIND_FUNC(js_cocos2dx_dragonbones_CCSlot_setSpriteFrame)
 
 extern se::Object* __jsb_dragonBones_Slot_proto;
 
@@ -6226,6 +6246,7 @@ bool js_register_cocos2dx_dragonbones_CCSlot(se::Object* obj)
 
     cls->defineFunction("getTexture", _SE(js_cocos2dx_dragonbones_CCSlot_getTexture));
     cls->defineFunction("updateWorldMatrix", _SE(js_cocos2dx_dragonbones_CCSlot_updateWorldMatrix));
+    cls->defineFunction("setSpriteFrame", _SE(js_cocos2dx_dragonbones_CCSlot_setSpriteFrame));
     cls->install();
     JSBClassType::registerClass<dragonBones::CCSlot>(cls);
 
