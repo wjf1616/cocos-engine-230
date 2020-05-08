@@ -57,6 +57,8 @@ public:
     cocos2d::Rect boundsRect;
 private:
     cocos2d::Mat4 _localMatrix;
+    std::vector<TextureData*> _textureDatas;
+    
 private:
     void disposeTriangles();
     void calculWorldMatrix();
@@ -77,7 +79,10 @@ public:
     virtual void _updateColor() override;
     void updateWorldMatrix();
     cocos2d::middleware::Texture2D* getTexture() const;
+    
+    void removeCustomTextureData();
     void setSpriteFrame(cocos2d::middleware::Texture2D* texture);
+    TextureData* getCustomTextureData(cocos2d::middleware::Texture2D* texture);
 protected:
     virtual void _updateFrame() override;
     virtual void _updateMesh() override;

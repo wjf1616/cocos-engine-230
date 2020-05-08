@@ -136,44 +136,83 @@ middleware::Texture2D* CCSlot::getTexture() const
     return currentTextureData->spriteFrame->getTexture();
 }
 
+//释放自定义textureData
+void CCSlot::removeCustomTextureData()
+{
+    for(auto textureData : _textureDatas){
+        textureData->clearPool();
+    }
+    _textureDatas.clear();
+}
+
 void CCSlot::setSpriteFrame(cocos2d::middleware::Texture2D* texture)
 {
     if(!texture){
         CCLOG("texture is null ~");
         return;
     }
-
-    if (getTexture() == texture) {
-        CCLOG("Same texture, no need to replace ~");
-        return;
-    }
     
-    auto rect = cocos2d::Rect(0, 0, texture->getPixelsWide(), texture->getPixelsHigh());
-    auto spriteFrame = cocos2d::middleware::SpriteFrame::createWithTexture(texture, rect);
-    auto textureData = (CCTextureData*)BaseObject::borrowObject<CCTextureData>();
-    textureData->rotated = false;
-    textureData->name = _textureData->name;
-    textureData->spriteFrame = spriteFrame;
-    
-    textureData->region.x = rect.getMinX();
-    textureData->region.y = rect.getMinY();
-    textureData->region.width = rect.size.width;
-    textureData->region.height = rect.size.height;
-
-    auto frameWidth = rect.size.width;
-    auto frameHeight = rect.size.height;
-    if (frameWidth > 0.0 && frameHeight > 0.0) {
-        auto frame = TextureData::createRectangle();
-        frame->x = rect.getMinX();
-        frame->y = rect.getMinY();
-        frame->width = frameWidth;
-        frame->height = frameHeight;
+    auto _customData = getCustomTextureData(texture);
+    if (!_customData) {
+        texture->retain();
+        auto rect = cocos2d::Rect(0, 0, texture->getPixelsWide(), texture->getPixelsHigh());
+        auto spriteFrame = cocos2d::middleware::SpriteFrame::createWithTexture(texture, rect);
         
-        textureData->frame = frame;
+        auto textureData = (CCTextureData*)BaseObject::borrowObject<CCTextureData>();
+        textureData->rotated = false;
+        textureData->name = _textureData->name;
+        textureData->spriteFrame = spriteFrame;
+        textureData->spriteFrame->retain();
+        
+        textureData->region.x = rect.getMinX();
+        textureData->region.y = rect.getMinY();
+        textureData->region.width = rect.size.width;
+        textureData->region.height = rect.size.height;
+
+        auto frameWidth = rect.size.width;
+        auto frameHeight = rect.size.height;
+        if (frameWidth > 0.0 && frameHeight > 0.0) {
+            auto frame = TextureData::createRectangle();
+            frame->x = rect.getMinX();
+            frame->y = rect.getMinY();
+            frame->width = frameWidth;
+            frame->height = frameHeight;
+            
+            textureData->frame = frame;
+        }
+        
+        _textureDatas.push_back(textureData);
+        _textureData = textureData;
+    }
+    else
+    {
+        auto textureData = static_cast<CCTextureData*>(_customData);
+        if (_textureData != textureData) {
+            _textureData = textureData;
+        }
+    }
+
+    _updateFrame();
+}
+
+TextureData* CCSlot::getCustomTextureData(cocos2d::middleware::Texture2D* texture)
+{
+    if (!texture) {
+        return nullptr;
     }
     
-    _textureData = textureData;
-    _updateFrame();
+    for(auto textureData : _textureDatas){
+        const auto currentTextureData = static_cast<CCTextureData*>(textureData);
+        if (currentTextureData && currentTextureData->spriteFrame)
+        {
+            auto pTex = currentTextureData->spriteFrame->getTexture();
+            if (pTex && pTex->getNativeTexture() == texture->getNativeTexture()) {
+                return textureData;
+            }
+        }
+    }
+    
+    return nullptr;
 }
 
 void CCSlot::_updateFrame()

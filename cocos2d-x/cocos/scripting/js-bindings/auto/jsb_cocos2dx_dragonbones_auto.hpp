@@ -343,6 +343,7 @@ bool register_all_cocos2dx_dragonbones(se::Object* obj);
 SE_DECLARE_FUNC(js_cocos2dx_dragonbones_CCSlot_getTexture);
 SE_DECLARE_FUNC(js_cocos2dx_dragonbones_CCSlot_updateWorldMatrix);
 SE_DECLARE_FUNC(js_cocos2dx_dragonbones_CCSlot_setSpriteFrame);
+SE_DECLARE_FUNC(js_cocos2dx_dragonbones_CCSlot_removeCustomTextureData);
 
 extern se::Object* __jsb_dragonBones_CCArmatureDisplay_proto;
 extern se::Class* __jsb_dragonBones_CCArmatureDisplay_class;
