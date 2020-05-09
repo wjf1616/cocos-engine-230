@@ -140,7 +140,7 @@ middleware::Texture2D* CCSlot::getTexture() const
 void CCSlot::removeCustomTextureData()
 {
     for(auto textureData : _textureDatas){
-        textureData->clearPool();
+        CC_SAFE_DELETE(textureData);
     }
     _textureDatas.clear();
 }
