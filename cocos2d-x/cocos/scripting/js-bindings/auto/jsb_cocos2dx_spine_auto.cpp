@@ -13100,17 +13100,19 @@ static bool js_cocos2dx_spine_SkeletonRenderer_setAttachmentFromFile(se::State& 
     const auto& args = s.args();
     size_t argc = args.size();
     do {
-        if (argc == 4) {
-            std::string arg0, arg1, arg2, arg3;
+        if (argc == 6)
+        {
+            std::string arg0, arg1, arg2, arg3, arg4;
+            cocos2d::Map<std::string, cocos2d::middleware::Texture2D*> arg5;
             ok &= seval_to_std_string(args[0], &arg0);
             ok &= seval_to_std_string(args[1], &arg1);
             ok &= seval_to_std_string(args[2], &arg2);
             ok &= seval_to_std_string(args[3], &arg3);
+            ok &= seval_to_std_string(args[4], &arg4);
+            ok &= seval_to_Map_string_key(args[5], &arg5);
             if (!ok) { ok = true; break; }
-            //            const char* arg1 = nullptr;
-            //            std::string arg1_tmp; ok &= seval_to_std_string(args[1], &arg1_tmp); arg1 = arg1_tmp.c_str();÷
-            //            if (!ok) { ok = true; break; }
-            bool result = cobj->setAttachmentFromFile(arg0, arg1, arg2, arg3.c_str());
+            
+            bool result = cobj->setAttachmentFromFile(arg0, arg1, arg2, arg3, arg4, arg5);
             ok &= boolean_to_seval(result, &s.rval());
             SE_PRECONDITION2(ok, false, "js_cocos2dx_spine_SkeletonRenderer_setAttachmentFromFile : Error processing arguments");
             return true;
@@ -13121,6 +13123,53 @@ static bool js_cocos2dx_spine_SkeletonRenderer_setAttachmentFromFile(se::State& 
     return false;
 }
 SE_BIND_FUNC(js_cocos2dx_spine_SkeletonRenderer_setAttachmentFromFile)
+
+static bool js_cocos2dx_spine_SkeletonRenderer_removeCustomSkin(se::State& s)
+{
+    spine::SkeletonRenderer* cobj = (spine::SkeletonRenderer*)s.nativeThisObject();
+    SE_PRECONDITION2(cobj, false, "js_cocos2dx_spine_SkeletonRenderer_removeCustomSkin : Invalid Native Object");
+    const auto& args = s.args();
+    size_t argc = args.size();
+    CC_UNUSED bool ok = true;
+    if (argc == 0) {
+        cobj->removeCustomSkin();
+        return true;
+    }
+    
+    SE_REPORT_ERROR("wrong number of arguments: %d, was expecting %d", (int)argc, 2);
+    return false;
+}
+SE_BIND_FUNC(js_cocos2dx_spine_SkeletonRenderer_removeCustomSkin)
+
+static bool js_cocos2dx_spine_SkeletonRenderer_setSkinFromFile(se::State& s)
+{
+    CC_UNUSED bool ok = true;
+    spine::SkeletonRenderer* cobj = (spine::SkeletonRenderer*)s.nativeThisObject();
+    SE_PRECONDITION2( cobj, false, "js_cocos2dx_spine_SkeletonRenderer_setSkinFromFile : Invalid Native Object");
+    const auto& args = s.args();
+    size_t argc = args.size();
+    do {
+        if (argc == 4) {
+            std::string arg0, arg1, arg3;
+            cocos2d::Map<std::string, cocos2d::middleware::Texture2D*> arg2;
+            
+            ok &= seval_to_std_string(args[0], &arg0);
+            ok &= seval_to_std_string(args[1], &arg1);
+            ok &= seval_to_Map_string_key(args[2], &arg2);
+            ok &= seval_to_std_string(args[3], &arg3);
+            
+            if (!ok) { ok = true; break; }
+            bool result = cobj->setSkinFromFile(arg0, arg1, arg2, arg3);
+            ok &= boolean_to_seval(result, &s.rval());
+            SE_PRECONDITION2(ok, false, "js_cocos2dx_spine_SkeletonRenderer_setSkinFromFile : Error processing arguments");
+            return true;
+        }
+    } while(false);
+    
+    SE_REPORT_ERROR("wrong number of arguments: %d", (int)argc);
+    return false;
+}
+SE_BIND_FUNC(js_cocos2dx_spine_SkeletonRenderer_setSkinFromFile)
 
 static bool js_cocos2dx_spine_SkeletonRenderer_setBonesToSetupPose(se::State& s)
 {
@@ -14013,6 +14062,8 @@ bool js_register_cocos2dx_spine_SkeletonRenderer(se::Object* obj)
     cls->defineFunction("setAttachmentFromFile", _SE(js_cocos2dx_spine_SkeletonRenderer_setAttachmentFromFile));
     cls->defineFunction("setAttachmentHSLEnable", _SE(js_cocos2dx_spine_SkeletonRenderer_setAttachmentHSLEnable));
     cls->defineFunction("setAttachmentHSL", _SE(js_cocos2dx_spine_SkeletonRenderer_setAttachmentHSL));
+    cls->defineFunction("setSkinFromFile", _SE(js_cocos2dx_spine_SkeletonRenderer_setSkinFromFile));
+    cls->defineFunction("removeCustomSkin", _SE(js_cocos2dx_spine_SkeletonRenderer_removeCustomSkin));
     cls->defineFunction("setBonesToSetupPose", _SE(js_cocos2dx_spine_SkeletonRenderer_setBonesToSetupPose));
     cls->defineFunction("onEnable", _SE(js_cocos2dx_spine_SkeletonRenderer_onEnable));
     cls->defineFunction("setEffect", _SE(js_cocos2dx_spine_SkeletonRenderer_setEffect));

@@ -302,6 +302,17 @@ int Skeleton::findSlotIndex(const String &slotName) {
 	return ContainerUtil::findIndexWithDataName(_slots, slotName);
 }
 
+Skin* Skeleton::findSkin(const String &skinName)
+{
+    return _data->findSkin(skinName);
+}
+
+void Skeleton::removeSkin(const String &skinName)
+{
+    int index = ContainerUtil::findIndexWithName(_data->getSkins(), skinName);
+    _data->getSkins().removeAt(index);
+}
+
 void Skeleton::setSkin(const String &skinName) {
 	Skin *foundSkin = _data->findSkin(skinName);
 
@@ -527,13 +538,29 @@ Skin *Skeleton::getCustomSkin(const char* partName)
         Slot *pSlot = _slots[i];
         if (pSlot) {
             auto attachment = pSlot->getAttachment();
-            if (attachment && attachment->getName() == partName) {
-                return pSlot->getData().getCustomSkin();
+            if (attachment) {
+                if (attachment->getName() == partName) {
+                    return pSlot->getData().getCustomSkin();
+                }
             }
         }
     }
     
     return nullptr;
+}
+
+void Skeleton::removeCustomSkin()
+{
+    for (size_t i = 0, n = _slots.size(); i < n; ++i)
+    {
+        Slot *pSlot = _slots[i];
+        if (pSlot) {
+            auto attachment = pSlot->getAttachment();
+            if (attachment) {
+                pSlot->getData().removeCustomSkin();
+            }
+        }
+    }
 }
 
 Color &Skeleton::getColor() {

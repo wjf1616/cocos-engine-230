@@ -178,13 +178,16 @@ namespace spine {
         bool setAttachmentHSL(const std::string& slotName, const std::string& attachmentName,float colorH, float colorS, float colorL);
         void setAttachmentHSLEnable(const std::string& slotName, const std::string& attachmentName,bool enabled);
         
-        bool setAttachmentFromFile(const std::string& slotName, const std::string& atlasFile,
-                                   const std::string& jsonFile, const char* newAttachmentName);
-            
+        bool setAttachmentFromFile(const std::string& slotName, const std::string& atlasFile, const std::string& newAttachmentName,const std::string& jsonData, const std::string& atlasData, cocos2d::Map<std::string, cocos2d::middleware::Texture2D*>& textures);
+        
+        void removeCustomSkin();
+        
+        bool setSkinFromFile(const std::string& jsonData, const std::string& atlasData, cocos2d::Map<std::string, cocos2d::middleware::Texture2D*>& textures, const std::string& skinName);
+        
     private:
         //获取组件的缓存key值
         std::string getAttachmentCacheKey(const std::string& atlasFile);
-        std::vector<Atlas*> _changeAttachmentAtlas;
+        std::vector<std::string> _skinNames;
     };
 
 }

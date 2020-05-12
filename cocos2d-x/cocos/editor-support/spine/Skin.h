@@ -93,12 +93,6 @@ public:
 				return result;
 			}
             
-            void activate(size_t index) {
-                auto temp = _buckets[_slotIndex][_bucketIndex];
-                _buckets[_slotIndex][_bucketIndex] = _buckets[_slotIndex][index];
-                _buckets[_slotIndex][index] = temp;
-            }
-            
 		protected:
 			Entries(Vector< Vector<Entry> > &buckets) : _buckets(buckets), _slotIndex(0), _bucketIndex(0) {
 			}
@@ -112,16 +106,17 @@ public:
 		void put(size_t slotIndex, const String &attachmentName, Attachment *attachment, const String & cacheName = nullptr);
         
 		Attachment *get(size_t slotIndex, const String &attachmentName, const String & cacheName = nullptr);
+        bool activateAttachment(size_t slotIndex, const String &attachmentName, const String & cacheName);
+        void remove(size_t slotIndex);
+		void remove(size_t slotIndex, const String &attachmentName, const String & cacheName = nullptr);
         
-		void remove(size_t slotIndex, const String &attachmentName);
-
 		Entries getEntries();
 
 	protected:
 		AttachmentMap();
 
 	private:
-
+        bool activate(Vector <Entry> &, const String &attachmentName,const String & cacheName);
 		int findInBucket(Vector <Entry> &, const String &attachmentName,const String & cacheName = nullptr);
         
 		Vector <Vector<Entry> > _buckets;
@@ -174,6 +169,9 @@ private:
 	void attachAll(Skeleton &skeleton, Skin &oldSkin);
     
 public:
+    //清楚缓存
+    void removeAttachmentByCache();
+    
     //将替换的组件，加入缓存
     void addAttachmentToCache (int slotIndex, const String &name, Attachment* attachment, const String &cacheName);
     

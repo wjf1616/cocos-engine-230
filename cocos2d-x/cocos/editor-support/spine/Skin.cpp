@@ -57,7 +57,7 @@ void Skin::AttachmentMap::put(size_t slotIndex, const String &attachmentName, At
 	if (slotIndex >= _buckets.size())
 		_buckets.setSize(slotIndex + 1, Vector<Entry>());
 	Vector<Entry> &bucket = _buckets[slotIndex];
-	int existing = findInBucket(bucket, attachmentName);
+	int existing = findInBucket(bucket, attachmentName,cacheName);
 	attachment->reference();
 	if (existing >= 0) {
 		disposeAttachment(bucket[existing]._attachment);
@@ -81,13 +81,44 @@ Attachment *Skin::AttachmentMap::get(size_t slotIndex, const String &attachmentN
 	return existing >= 0 ? _buckets[slotIndex][existing]._attachment : NULL;
 }
 
-void Skin::AttachmentMap::remove(size_t slotIndex, const String &attachmentName) {
+void Skin::AttachmentMap::remove(size_t slotIndex)
+{
+    auto bucket = _buckets[slotIndex];
+    for (size_t i = 0; i < bucket.size(); i++){
+        disposeAttachment(bucket[i]._attachment);
+    }
+    
+    _buckets[slotIndex].clear();
+}
+
+void Skin::AttachmentMap::remove(size_t slotIndex, const String &attachmentName, const String & cacheName /*= nullptr*/) {
 	if (slotIndex >= _buckets.size()) return;
-	int existing = findInBucket(_buckets[slotIndex], attachmentName);
+	int existing = findInBucket(_buckets[slotIndex],attachmentName,cacheName);
 	if (existing >= 0) {
 		disposeAttachment(_buckets[slotIndex][existing]._attachment);
 		_buckets[slotIndex].removeAt(existing);
 	}
+}
+
+bool Skin::AttachmentMap::activateAttachment(size_t slotIndex, const String &attachmentName, const String & cacheName)
+{
+    if (slotIndex >= _buckets.size())
+    {
+        return false;
+    }
+    
+    return activate(_buckets[slotIndex], attachmentName, cacheName);
+}
+
+bool Skin::AttachmentMap::activate(Vector <Entry> &bucket, const String &attachmentName,const String & cacheName)
+{
+    int index = findInBucket(bucket,attachmentName,cacheName);
+    if (index > 0) {
+        auto temp = bucket[index];
+        bucket[index] = bucket[0];
+        bucket[0] = temp;
+    }
+    return true;
 }
 
 int Skin::AttachmentMap::findInBucket(Vector<Entry> &bucket, const String &attachmentName,const String & cacheName /*= nullptr*/) {
@@ -216,39 +247,63 @@ Vector<BoneData*>& Skin::getBones() {
 	return _bones;
 }
 
+void Skin::removeAttachmentByCache()
+{
+    Skin::AttachmentMap::Entries entries = _attachments.getEntries();
+    while (entries.hasNext()) {
+        Skin::AttachmentMap::Entry &entry = entries.next();
+        _attachments.remove(entry._slotIndex);
+    }
+}
+
 //将替换的组件，加入缓存
 void Skin::addAttachmentToCache (int slotIndex, const String &name, Attachment* attachment, const String &cacheName)
 {
     assert(attachment);
     _attachments.put(slotIndex, name, attachment,cacheName);
+    
+    //激活组件
+    activateAttachmentByCache(cacheName);
 }
 
 //缓存中是否存在该组件
 Attachment* Skin::getAttachmentByCache (const String &name)
 {
+    size_t slotIndex = -1;
+    String attachmentName = "";
+    
     Skin::AttachmentMap::Entries entries = _attachments.getEntries();
     while (entries.hasNext()) {
         Skin::AttachmentMap::Entry &entry = entries.next();
-        if (entry._cacheName == name) {
-            return entry._attachment;
-        }
+        slotIndex = entry._slotIndex;
+        attachmentName = entry._name;
+        break;
     }
     
-    return nullptr;
+    if (slotIndex == -1 && attachmentName.isEmpty()) {
+        return nullptr;
+    }
+    
+    return _attachments.get(slotIndex, attachmentName, name);
 }
 
 //激活缓存中的组件
 void Skin::activateAttachmentByCache(const String &name)
 {
-    int i=0;
+    size_t slotIndex = -1;
+    String attachmentName = "";
+    
     Skin::AttachmentMap::Entries entries = _attachments.getEntries();
     while (entries.hasNext()) {
         Skin::AttachmentMap::Entry &entry = entries.next();
-        if (entry._cacheName == name) {
-            break;
-        }
-        i++;
+        slotIndex = entry._slotIndex;
+        attachmentName = entry._name;
+        break;
     }
-    entries.activate(i);
+    
+    if (slotIndex == -1 && attachmentName.isEmpty()) {
+        return;
+    }
+    _attachments.activateAttachment(slotIndex, attachmentName, name);
 }
 

@@ -54,10 +54,7 @@ SlotData::SlotData(int index, const String &name, BoneData &boneData) :
 
 SlotData::~SlotData()
 {
-    if (_customSkin != nullptr) {
-        delete _customSkin;
-        _customSkin = nullptr;
-    }
+    
 }
 
 int SlotData::getIndex() {
@@ -111,4 +108,14 @@ Skin* SlotData::getCustomSkin()
     }
     
     return _customSkin;
+}
+
+void SlotData::removeCustomSkin()
+{
+    if (_customSkin != nullptr) {
+        _customSkin->removeAttachmentByCache();
+        
+        delete _customSkin;
+        _customSkin = nullptr;
+    }
 }

@@ -124,6 +124,10 @@ public:
 	/// @return -1 if the bone was not found.
 	int findSlotIndex(const String &slotName);
 
+    Skin* findSkin(const String &skinName);
+    
+    void removeSkin(const String &skinName);
+    
 	/// Sets a skin by name (see setSkin).
 	void setSkin(const String &skinName);
 
@@ -184,6 +188,7 @@ public:
 
 	Skin *getSkin();
     Skin *getCustomSkin(const char* partName);
+    void removeCustomSkin();
     
 	Color &getColor();
 

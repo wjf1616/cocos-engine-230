@@ -56,6 +56,13 @@ static const std::string techStage = "opaque";
 static const std::string textureKey = "texture";
 
 static Cocos2dTextureLoader textureLoader;
+static cocos2d::Map<std::string, middleware::Texture2D*>* _preloadedAtlasTextures = nullptr;
+static middleware::Texture2D* _getPreloadedAtlasTexture(const char* path)
+{
+    assert(_preloadedAtlasTextures);
+    auto it = _preloadedAtlasTextures->find(path);
+    return it != _preloadedAtlasTextures->end() ? it->second : nullptr;
+}
 
 enum DebugType {
     None = 0,
@@ -167,13 +174,6 @@ SkeletonRenderer::~SkeletonRenderer () {
     CC_SAFE_RELEASE(_effect);
     
     stopSchedule();
-    
-    //释放自定义atlas
-    for(auto atlas : this->_changeAttachmentAtlas){
-        delete atlas;
-    }
-    this->_changeAttachmentAtlas.clear();
-    
 }
 
 void SkeletonRenderer::initWithUUID(const std::string& uuid) {
@@ -1158,9 +1158,9 @@ bool SkeletonRenderer::setAttachmentHSL(const std::string& slotName, const std::
     return true;
 }
 
-bool SkeletonRenderer::setAttachmentFromFile(const std::string& slotName, const std::string& atlasFile, const std::string& jsonFile, const char* newAttachmentName){
-    
-    auto skin = _skeleton->getCustomSkin(newAttachmentName);
+bool SkeletonRenderer::setAttachmentFromFile(const std::string& slotName, const std::string& atlasFile, const std::string& newAttachmentName,const std::string& jsonData, const std::string& atlasData, cocos2d::Map<std::string, cocos2d::middleware::Texture2D*>& textures)
+{
+    auto skin = _skeleton->getCustomSkin(newAttachmentName.c_str());
     if (skin == nullptr) {
         return false;
     }
@@ -1170,93 +1170,66 @@ bool SkeletonRenderer::setAttachmentFromFile(const std::string& slotName, const 
         return false;
     }
     
+    if (newAttachmentName.empty()) {
+        return false;
+    }
+    
+    Json *attachmentMap = new Json(jsonData.c_str());
+    if (!attachmentMap) {
+        return false;
+    }
+    
     std::string pAttachmentName = this->getAttachmentCacheKey(atlasFile);
     if (!pAttachmentName.empty()) {
         auto pAttachment = skin->getAttachmentByCache(pAttachmentName.c_str());
         if (pAttachment != 0) {
             skin->activateAttachmentByCache(pAttachmentName.c_str());
-            _skeleton->setAttachment(slotName.c_str(),newAttachmentName);
+            _skeleton->setAttachment(slotName.c_str(),newAttachmentName.c_str());
             return true;
         }
     }
     
-    auto isExistAtlas = FileUtils::getInstance()->isFileExist(atlasFile);
-    if (!isExistAtlas) {
-        CCLOG("SkeletonRenderer::setAttachmentFromFile error: Could not file: %s", atlasFile.c_str());
-        return false;
-    }
+    size_t indx = newAttachmentName.find_last_of("/");
+    std::string newname = newAttachmentName.substr(indx+1);
     
-    auto isExistJson = FileUtils::getInstance()->isFileExist(jsonFile);
-    if (!isExistJson) {
-        CCLOG("SkeletonRenderer::setAttachmentFromFile error: Could not file: %s", jsonFile.c_str());
-        return false;
-    }
-    
-    Atlas* atlas = new (__FILE__, __LINE__) Atlas(atlasFile.c_str(), &textureLoader);
-    CCASSERT(atlas, "Error reading atlas file.");
-    
-    this->_changeAttachmentAtlas.push_back(atlas);
-    
-    Cocos2dAtlasAttachmentLoader* atlasAttachmentLoader = new (__FILE__, __LINE__) Cocos2dAtlasAttachmentLoader(_atlas);
-    
-    int dataLength = 0;
-    const char *attachJsonStr = SpineExtension::readFile(jsonFile.c_str(), &dataLength);
-    Json *attachmentMap = new Json(attachJsonStr);
-    
-    const char *attachmentType = Json::getString(attachmentMap, "type", "");
-    std::string attachmentNamtStr = newAttachmentName;
-    if (attachmentNamtStr.empty()) {
-        return false;
-    }
-    size_t indx = attachmentNamtStr.find_last_of("/");
-    std::string newname = attachmentNamtStr.substr(indx+1);
-    
-    Attachment* attachment = nullptr;
-    if(strcmp(attachmentType, "region") == 0){
-        auto regionAttachment = atlasAttachmentLoader->newRegionAttachment(*skin,newname.c_str(),newname.c_str());
-        
-        regionAttachment->setX(Json::getFloat(attachmentMap, "x", 0.0f));
-        regionAttachment->setY(Json::getFloat(attachmentMap, "y", 0.0f));
-        regionAttachment->setScaleX(Json::getFloat(attachmentMap, "scaleX", 1.0f));
-        regionAttachment->setScaleY(Json::getFloat(attachmentMap, "scaleY", 1.0f));
-        regionAttachment->setRotation(Json::getFloat(attachmentMap, "rotation", 0.0f));
-        regionAttachment->setWidth(Json::getFloat(attachmentMap, "width", 0.0f));
-        regionAttachment->setHeight(Json::getFloat(attachmentMap, "height", 0.0f));
+    // create atlas from preloaded texture
+    _preloadedAtlasTextures = &textures;
+    spine::spAtlasPage_setCustomTextureLoader(_getPreloadedAtlasTexture);
 
-        regionAttachment->updateOffset();
-        attachment = regionAttachment;
-        
-    }else if(strcmp(attachmentType, "mesh") == 0){
-        auto meshAttachment = atlasAttachmentLoader->newMeshAttachment(*skin,newname.c_str(),newname.c_str());
-        meshAttachment->setWidth(78);
-        meshAttachment->setHeight(67);
-
-        Json *uvs = Json::getItem(attachmentMap, "uvs");
-        SkeletonJson spineJson(atlasAttachmentLoader);
-        spineJson.readVertices(attachmentMap, meshAttachment, Json::getCurSize(uvs));
-        
-        meshAttachment->setHullLength(Json::getInt(attachmentMap, "hull", 0));
-        meshAttachment->updateUVs();
-        
-        attachment = meshAttachment;
-    }
+    spine::Atlas* atlas = new (__FILE__, __LINE__) spine::Atlas(atlasData.c_str(), (int)atlasData.size(), "", &textureLoader);
     
+    _preloadedAtlasTextures = nullptr;
+    spine::spAtlasPage_setCustomTextureLoader(nullptr);
+    
+    spine::AttachmentLoader* atlasAttachmentLoader = new (__FILE__, __LINE__) spine::Cocos2dAtlasAttachmentLoader(atlas);
+
+    SkeletonJson spineJson(atlasAttachmentLoader);
+    Attachment* attachment = spineJson.createAttachmet(attachmentMap, skin, newAttachmentName.c_str(), newname.c_str());
     if (skin && attachment != nullptr) {
-        skin->addAttachmentToCache(index,newAttachmentName,attachment,pAttachmentName.c_str());
-        _skeleton->setAttachment(slotName.c_str(),newAttachmentName);
+        skin->addAttachmentToCache(index,newAttachmentName.c_str(),attachment,pAttachmentName.c_str());
+        _skeleton->setAttachment(slotName.c_str(),newAttachmentName.c_str());
+    }
+    
+    if (atlas) {
+        delete atlas;
+        atlas = nullptr;
     }
     
     if (attachmentMap != nullptr) {
         delete attachmentMap;
         attachmentMap = nullptr;
     }
-
-    if (attachJsonStr != nullptr) {
-        std::free((void*)attachJsonStr);
-        attachJsonStr = nullptr;
-    }
     
     return true;
+}
+
+void SkeletonRenderer::removeCustomSkin()
+{
+    for (auto skinName : _skinNames) {
+        _skeleton->removeSkin(skinName.c_str());
+    }
+    _skinNames.clear();
+    _skeleton->removeCustomSkin();
 }
 
 std::string SkeletonRenderer::getAttachmentCacheKey(const std::string& atlasFile)
@@ -1274,3 +1247,47 @@ std::string SkeletonRenderer::getAttachmentCacheKey(const std::string& atlasFile
     return atlasFile.substr(indx1,indx2-indx1);
 }
 
+bool SkeletonRenderer::setSkinFromFile(const std::string& jsonData, const std::string& atlasData, cocos2d::Map<std::string, cocos2d::middleware::Texture2D*>& textures, const std::string& skinName)
+{
+    auto skin = _skeleton->findSkin(skinName.c_str());
+    if (skin) {
+        setSkin(skinName.c_str());
+        return false;
+    }
+    
+    // create atlas from preloaded texture
+    _preloadedAtlasTextures = &textures;
+    spine::spAtlasPage_setCustomTextureLoader(_getPreloadedAtlasTexture);
+
+    spine::Atlas* atlas = new (__FILE__, __LINE__) spine::Atlas(atlasData.c_str(), (int)atlasData.size(), "", &textureLoader);
+    
+    _preloadedAtlasTextures = nullptr;
+    spine::spAtlasPage_setCustomTextureLoader(nullptr);
+    
+    spine::AttachmentLoader* attachmentLoader = new (__FILE__, __LINE__) spine::Cocos2dAtlasAttachmentLoader(atlas);
+    SkeletonJson json(attachmentLoader);
+    
+    Json *skinMap = new Json(jsonData.c_str());
+    json.readSkinData(_skeleton->getData(), skinMap, skinName.c_str());
+    setSkin(skinName);
+    
+    //记录skin的名称
+    _skinNames.push_back(skinName);
+    
+    if (skinMap != nullptr) {
+        delete skinMap;
+        skinMap = nullptr;
+    }
+    
+    if (atlas) {
+        delete atlas;
+        atlas = nullptr;
+    }
+    
+    if (attachmentLoader) {
+        delete attachmentLoader;
+        attachmentLoader = nullptr;
+    }
+    
+    return true;
+}

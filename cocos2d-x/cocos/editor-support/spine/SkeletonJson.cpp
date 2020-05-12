@@ -471,7 +471,7 @@ SkeletonData *SkeletonJson::readSkeletonData(const char *json) {
 			if (strcmp(skinName, "default") == 0) {
 				skeletonData->_defaultSkin = skin;
 			}
-
+            
             auto attachmentsData = Json::getItem(skinMap, "attachments");
             if (!attachmentsData) {
                 attachmentsData = skinMap;
@@ -733,6 +733,436 @@ SkeletonData *SkeletonJson::readSkeletonData(const char *json) {
 	delete root;
 
 	return skeletonData;
+}
+
+bool SkeletonJson::readAttachment(SkeletonData *skeletonData, Json *skinMap, Skin *skin)
+{
+    auto attachmentsData = Json::getItem(skinMap, "attachments");
+    if (!attachmentsData) {
+        attachmentsData = skinMap;
+    }
+    
+    Json *attachmentsMap = nullptr;
+    for (attachmentsMap = attachmentsData->_child; attachmentsMap; attachmentsMap = attachmentsMap->_next) {
+        SlotData* slot = skeletonData->findSlot(attachmentsMap->_name);
+        if (!slot) {
+            continue;
+        }
+        
+        Json *attachmentMap = nullptr;
+        for (attachmentMap = attachmentsMap->_child; attachmentMap; attachmentMap = attachmentMap->_next) {
+            Attachment *attachment = NULL;
+            const char *skinAttachmentName = attachmentMap->_name;
+            const char *attachmentName = Json::getString(attachmentMap, "name", skinAttachmentName);
+            const char *attachmentPath = Json::getString(attachmentMap, "path", attachmentName);
+            const char *color;
+            Json *entry;
+
+            const char *typeString = Json::getString(attachmentMap, "type", "region");
+            AttachmentType type;
+            if (strcmp(typeString, "region") == 0) type = AttachmentType_Region;
+            else if (strcmp(typeString, "mesh") == 0) type = AttachmentType_Mesh;
+            else if (strcmp(typeString, "linkedmesh") == 0) type = AttachmentType_Linkedmesh;
+            else if (strcmp(typeString, "boundingbox") == 0) type = AttachmentType_Boundingbox;
+            else if (strcmp(typeString, "path") == 0) type = AttachmentType_Path;
+            else if (strcmp(typeString, "clipping") == 0) type = AttachmentType_Clipping;
+            else if (strcmp(typeString, "point") == 0) type = AttachmentType_Point;
+            else {
+                setError(skinMap, "Unknown attachment type: ", typeString);
+                return false;
+            }
+            
+            int ii;
+            switch (type) {
+                case AttachmentType_Region: {
+                    attachment = _attachmentLoader->newRegionAttachment(*skin, attachmentName, attachmentPath);
+                    if (!attachment) {
+                        continue;
+                    }
+
+                    RegionAttachment *region = static_cast<RegionAttachment *>(attachment);
+                    region->_path = attachmentPath;
+
+                    region->_x = Json::getFloat(attachmentMap, "x", 0) * _scale;
+                    region->_y = Json::getFloat(attachmentMap, "y", 0) * _scale;
+                    region->_scaleX = Json::getFloat(attachmentMap, "scaleX", 1);
+                    region->_scaleY = Json::getFloat(attachmentMap, "scaleY", 1);
+                    region->_rotation = Json::getFloat(attachmentMap, "rotation", 0);
+                    region->_width = Json::getFloat(attachmentMap, "width", 32) * _scale;
+                    region->_height = Json::getFloat(attachmentMap, "height", 32) * _scale;
+
+                    color = Json::getString(attachmentMap, "color", 0);
+                    if (color) {
+                        region->getColor().r = toColor(color, 0);
+                        region->getColor().g = toColor(color, 1);
+                        region->getColor().b = toColor(color, 2);
+                        region->getColor().a = toColor(color, 3);
+                    }
+
+                    region->updateOffset();
+                    _attachmentLoader->configureAttachment(region);
+                    break;
+                }
+                case AttachmentType_Mesh:
+                case AttachmentType_Linkedmesh: {
+                    attachment = _attachmentLoader->newMeshAttachment(*skin, attachmentName, attachmentPath);
+
+                    if (!attachment) {
+                        continue;
+                    }
+
+                    MeshAttachment *mesh = static_cast<MeshAttachment *>(attachment);
+                    mesh->_path = attachmentPath;
+
+                    color = Json::getString(attachmentMap, "color", 0);
+                    if (color) {
+                        mesh->getColor().r = toColor(color, 0);
+                        mesh->getColor().g = toColor(color, 1);
+                        mesh->getColor().b = toColor(color, 2);
+                        mesh->getColor().a = toColor(color, 3);
+                    }
+
+                    mesh->_width = Json::getFloat(attachmentMap, "width", 32) * _scale;
+                    mesh->_height = Json::getFloat(attachmentMap, "height", 32) * _scale;
+
+                    entry = Json::getItem(attachmentMap, "parent");
+                    if (!entry) {
+                        int verticesLength;
+                        entry = Json::getItem(attachmentMap, "triangles");
+                        mesh->_triangles.ensureCapacity(entry->_size);
+                        mesh->_triangles.setSize(entry->_size, 0);
+                        for (entry = entry->_child, ii = 0; entry; entry = entry->_next, ++ii)
+                            mesh->_triangles[ii] = (unsigned short) entry->_valueInt;
+
+                        entry = Json::getItem(attachmentMap, "uvs");
+                        verticesLength = entry->_size;
+                        mesh->_regionUVs.ensureCapacity(verticesLength);
+                        mesh->_regionUVs.setSize(verticesLength, 0);
+                        for (entry = entry->_child, ii = 0; entry; entry = entry->_next, ++ii)
+                            mesh->_regionUVs[ii] = entry->_valueFloat;
+
+                        readVertices(attachmentMap, mesh, verticesLength);
+
+                        mesh->updateUVs();
+
+                        mesh->_hullLength = Json::getInt(attachmentMap, "hull", 0);
+
+                        entry = Json::getItem(attachmentMap, "edges");
+                        if (entry) {
+                            mesh->_edges.ensureCapacity(entry->_size);
+                            mesh->_edges.setSize(entry->_size, 0);
+                            for (entry = entry->_child, ii = 0; entry; entry = entry->_next, ++ii)
+                                mesh->_edges[ii] = entry->_valueInt;
+                        }
+                        _attachmentLoader->configureAttachment(mesh);
+                    } else {
+                        bool inheritDeform = Json::getInt(attachmentMap, "deform", 1) ? true : false;
+                        LinkedMesh *linkedMesh = new(__FILE__, __LINE__) LinkedMesh(mesh,
+                            String(Json::getString(attachmentMap, "skin", 0)), slot->getIndex(), String(entry->_valueString),
+                            inheritDeform);
+                        _linkedMeshes.add(linkedMesh);
+                    }
+                    break;
+                }
+                case AttachmentType_Boundingbox: {
+                    attachment = _attachmentLoader->newBoundingBoxAttachment(*skin, attachmentName);
+
+                    BoundingBoxAttachment *box = static_cast<BoundingBoxAttachment *>(attachment);
+
+                    int vertexCount = Json::getInt(attachmentMap, "vertexCount", 0) << 1;
+                    readVertices(attachmentMap, box, vertexCount);
+                    _attachmentLoader->configureAttachment(attachment);
+                    break;
+                }
+                case AttachmentType_Path: {
+                    attachment = _attachmentLoader->newPathAttachment(*skin, attachmentName);
+
+                    PathAttachment *pathAttatchment = static_cast<PathAttachment *>(attachment);
+
+                    int vertexCount = 0;
+                    pathAttatchment->_closed = Json::getInt(attachmentMap, "closed", 0) ? true : false;
+                    pathAttatchment->_constantSpeed = Json::getInt(attachmentMap, "constantSpeed", 1) ? true : false;
+                    vertexCount = Json::getInt(attachmentMap, "vertexCount", 0);
+                    readVertices(attachmentMap, pathAttatchment, vertexCount << 1);
+
+                    pathAttatchment->_lengths.ensureCapacity(vertexCount / 3);
+                    pathAttatchment->_lengths.setSize(vertexCount / 3, 0);
+
+                    auto curves = Json::getItem(attachmentMap, "lengths");
+                    for (curves = curves->_child, ii = 0; curves; curves = curves->_next, ++ii)
+                        pathAttatchment->_lengths[ii] = curves->_valueFloat * _scale;
+                    _attachmentLoader->configureAttachment(attachment);
+                    break;
+                }
+                case AttachmentType_Point: {
+                    attachment = _attachmentLoader->newPointAttachment(*skin, attachmentName);
+
+                    PointAttachment *point = static_cast<PointAttachment *>(attachment);
+
+                    point->_x = Json::getFloat(attachmentMap, "x", 0) * _scale;
+                    point->_y = Json::getFloat(attachmentMap, "y", 0) * _scale;
+                    point->_rotation = Json::getFloat(attachmentMap, "rotation", 0);
+                    _attachmentLoader->configureAttachment(attachment);
+                    break;
+                }
+                case AttachmentType_Clipping: {
+                    attachment = _attachmentLoader->newClippingAttachment(*skin, attachmentName);
+
+                    ClippingAttachment *clip = static_cast<ClippingAttachment *>(attachment);
+
+                    int vertexCount = 0;
+                    const char *end = Json::getString(attachmentMap, "end", 0);
+                    if (end) clip->_endSlot = skeletonData->findSlot(end);
+                    vertexCount = Json::getInt(attachmentMap, "vertexCount", 0) << 1;
+                    readVertices(attachmentMap, clip, vertexCount);
+                    _attachmentLoader->configureAttachment(attachment);
+                    break;
+                }
+            }
+
+            skin->setAttachment(slot->getIndex(), skinAttachmentName, attachment);
+        }
+    }
+    return true;
+}
+
+Attachment* SkeletonJson::createAttachmet(Json *attachmentMap, Skin *skin, const String& attachmentName, const String& attachmentPath)
+{
+    if (!attachmentMap || !skin || attachmentName.isEmpty()) {
+        return nullptr;
+    }
+    
+    const char *typeString = Json::getString(attachmentMap, "type", "region");
+    AttachmentType type;
+    if (strcmp(typeString, "region") == 0) type = AttachmentType_Region;
+    else if (strcmp(typeString, "mesh") == 0) type = AttachmentType_Mesh;
+    else if (strcmp(typeString, "linkedmesh") == 0) type = AttachmentType_Linkedmesh;
+    else if (strcmp(typeString, "boundingbox") == 0) type = AttachmentType_Boundingbox;
+    else if (strcmp(typeString, "path") == 0) type = AttachmentType_Path;
+    else if (strcmp(typeString, "clipping") == 0) type = AttachmentType_Clipping;
+    else if (strcmp(typeString, "point") == 0) type = AttachmentType_Point;
+    else {
+        return nullptr;
+    }
+    
+    Attachment *attachment = nullptr;
+    const char *color = nullptr;
+    Json *entry = nullptr;
+    int ii = 0;
+    
+    switch (type) {
+        case AttachmentType_Region: {
+            attachment = _attachmentLoader->newRegionAttachment(*skin, attachmentName, attachmentPath);
+            if (!attachment) {
+                return nullptr;
+            }
+
+            RegionAttachment *region = static_cast<RegionAttachment *>(attachment);
+            region->_path = attachmentName;
+
+            region->_x = Json::getFloat(attachmentMap, "x", 0) * _scale;
+            region->_y = Json::getFloat(attachmentMap, "y", 0) * _scale;
+            region->_scaleX = Json::getFloat(attachmentMap, "scaleX", 1);
+            region->_scaleY = Json::getFloat(attachmentMap, "scaleY", 1);
+            region->_rotation = Json::getFloat(attachmentMap, "rotation", 0);
+            region->_width = Json::getFloat(attachmentMap, "width", 32) * _scale;
+            region->_height = Json::getFloat(attachmentMap, "height", 32) * _scale;
+
+            color = Json::getString(attachmentMap, "color", 0);
+            if (color) {
+                region->getColor().r = toColor(color, 0);
+                region->getColor().g = toColor(color, 1);
+                region->getColor().b = toColor(color, 2);
+                region->getColor().a = toColor(color, 3);
+            }
+
+            region->updateOffset();
+            _attachmentLoader->configureAttachment(region);
+            break;
+        }
+        case AttachmentType_Mesh:
+        case AttachmentType_Linkedmesh: {
+            attachment = _attachmentLoader->newMeshAttachment(*skin, attachmentName, attachmentPath);
+            if (!attachment) {
+                return nullptr;
+            }
+
+            MeshAttachment *mesh = static_cast<MeshAttachment *>(attachment);
+            mesh->_path = attachmentName;
+
+            color = Json::getString(attachmentMap, "color", 0);
+            if (color) {
+                mesh->getColor().r = toColor(color, 0);
+                mesh->getColor().g = toColor(color, 1);
+                mesh->getColor().b = toColor(color, 2);
+                mesh->getColor().a = toColor(color, 3);
+            }
+
+            mesh->_width = Json::getFloat(attachmentMap, "width", 32) * _scale;
+            mesh->_height = Json::getFloat(attachmentMap, "height", 32) * _scale;
+
+            entry = Json::getItem(attachmentMap, "parent");
+            if (!entry) {
+                int verticesLength;
+                entry = Json::getItem(attachmentMap, "triangles");
+                mesh->_triangles.ensureCapacity(entry->_size);
+                mesh->_triangles.setSize(entry->_size, 0);
+                for (entry = entry->_child, ii = 0; entry; entry = entry->_next, ++ii)
+                    mesh->_triangles[ii] = (unsigned short) entry->_valueInt;
+
+                entry = Json::getItem(attachmentMap, "uvs");
+                verticesLength = entry->_size;
+                mesh->_regionUVs.ensureCapacity(verticesLength);
+                mesh->_regionUVs.setSize(verticesLength, 0);
+                for (entry = entry->_child, ii = 0; entry; entry = entry->_next, ++ii)
+                    mesh->_regionUVs[ii] = entry->_valueFloat;
+
+                readVertices(attachmentMap, mesh, verticesLength);
+
+                mesh->updateUVs();
+
+                mesh->_hullLength = Json::getInt(attachmentMap, "hull", 0);
+
+                entry = Json::getItem(attachmentMap, "edges");
+                if (entry) {
+                    mesh->_edges.ensureCapacity(entry->_size);
+                    mesh->_edges.setSize(entry->_size, 0);
+                    for (entry = entry->_child, ii = 0; entry; entry = entry->_next, ++ii)
+                        mesh->_edges[ii] = entry->_valueInt;
+                }
+                _attachmentLoader->configureAttachment(mesh);
+            }
+            break;
+        }
+        case AttachmentType_Boundingbox: {
+            attachment = _attachmentLoader->newBoundingBoxAttachment(*skin, attachmentName);
+
+            BoundingBoxAttachment *box = static_cast<BoundingBoxAttachment *>(attachment);
+
+            int vertexCount = Json::getInt(attachmentMap, "vertexCount", 0) << 1;
+            readVertices(attachmentMap, box, vertexCount);
+            _attachmentLoader->configureAttachment(attachment);
+            break;
+        }
+        case AttachmentType_Path: {
+            attachment = _attachmentLoader->newPathAttachment(*skin, attachmentName);
+
+            PathAttachment *pathAttatchment = static_cast<PathAttachment *>(attachment);
+
+            int vertexCount = 0;
+            pathAttatchment->_closed = Json::getInt(attachmentMap, "closed", 0) ? true : false;
+            pathAttatchment->_constantSpeed = Json::getInt(attachmentMap, "constantSpeed", 1) ? true : false;
+            vertexCount = Json::getInt(attachmentMap, "vertexCount", 0);
+            readVertices(attachmentMap, pathAttatchment, vertexCount << 1);
+
+            pathAttatchment->_lengths.ensureCapacity(vertexCount / 3);
+            pathAttatchment->_lengths.setSize(vertexCount / 3, 0);
+
+            auto curves = Json::getItem(attachmentMap, "lengths");
+            for (curves = curves->_child, ii = 0; curves; curves = curves->_next, ++ii)
+                pathAttatchment->_lengths[ii] = curves->_valueFloat * _scale;
+            _attachmentLoader->configureAttachment(attachment);
+            break;
+        }
+        case AttachmentType_Point: {
+            attachment = _attachmentLoader->newPointAttachment(*skin, attachmentName);
+
+            PointAttachment *point = static_cast<PointAttachment *>(attachment);
+
+            point->_x = Json::getFloat(attachmentMap, "x", 0) * _scale;
+            point->_y = Json::getFloat(attachmentMap, "y", 0) * _scale;
+            point->_rotation = Json::getFloat(attachmentMap, "rotation", 0);
+            _attachmentLoader->configureAttachment(attachment);
+            break;
+        }
+        case AttachmentType_Clipping: {
+            attachment = _attachmentLoader->newClippingAttachment(*skin, attachmentName);
+            ClippingAttachment *clip = static_cast<ClippingAttachment *>(attachment);
+
+            int vertexCount = 0;
+//            const char *end = Json::getString(attachmentMap, "end", 0);
+//            if (end){
+//                clip->_endSlot = skeletonData->findSlot(end);
+//            }
+            
+            vertexCount = Json::getInt(attachmentMap, "vertexCount", 0) << 1;
+            readVertices(attachmentMap, clip, vertexCount);
+            _attachmentLoader->configureAttachment(attachment);
+            break;
+        }
+    }
+    
+    return attachment;
+}
+
+bool SkeletonJson::readSkinData(SkeletonData *skeletonData, Json *skinData, const String& customSkinName)
+{
+    if (!skeletonData || !skinData || customSkinName.isEmpty()) {
+        return false;
+    }
+    
+    auto skins = Json::getItem(skinData, "skins");
+    if (skins) {
+        Json *skinMap = nullptr;
+        int i = 0;
+        for (skinMap = skins->_child, i = 0; skinMap; skinMap = skinMap->_next, ++i) {
+            Skin *skin = nullptr;
+            String _customSkinName = customSkinName;
+            auto skinName = i > 0 ? _customSkinName.append("_").append(i) : customSkinName;
+            auto sk = skeletonData->findSkin(skinName);
+            if (sk) {
+                continue;
+            }
+            
+            skin = new(__FILE__, __LINE__) Skin(skinName);
+            Json *item = Json::getItem(skinMap, "bones");
+            if (item) {
+                for (item = item->_child; item; item = item->_next) {
+                    BoneData* data = skeletonData->findBone(item->_valueString);
+                    if (data) {
+                        skin->getBones().add(data);
+                    }
+                }
+            }
+
+            item = Json::getItem(skinMap, "ik");
+            if (item) {
+                for (item = item->_child; item; item = item->_next) {
+                    IkConstraintData* data = skeletonData->findIkConstraint(item->_valueString);
+                    if (data) {
+                        skin->getConstraints().add(data);
+                    }
+                    
+                }
+            }
+
+            item = Json::getItem(skinMap, "transform");
+            if (item) {
+                for (item = item->_child; item; item = item->_next) {
+                    TransformConstraintData* data = skeletonData->findTransformConstraint(item->_valueString);
+                    if (!data) {
+                        skin->getConstraints().add(data);
+                    }
+                }
+            }
+
+            item = Json::getItem(skinMap, "path");
+            if (item) {
+                for (item = item->_child; item; item = item->_next) {
+                    PathConstraintData* data = skeletonData->findPathConstraint(item->_valueString);
+                    if (!data) {
+                        skin->getConstraints().add(data);
+                    }
+                }
+            }
+            
+            readAttachment(skeletonData, skinMap, skin);
+            
+            skeletonData->_skins.add(skin);
+        }
+    }
+    
+    return true;
 }
 
 float SkeletonJson::toColor(const char *value, size_t index) {

@@ -100,6 +100,7 @@ public:
 	void setBlendMode(BlendMode inValue);
 
     Skin* getCustomSkin();
+    void removeCustomSkin();
 private:
 	const int _index;
 	String _name;

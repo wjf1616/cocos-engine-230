@@ -52,6 +52,8 @@ class AttachmentLoader;
 class LinkedMesh;
 
 class String;
+class Skin;
+class Attachment;
 
 class SP_API SkeletonJson : public SpineObject {
 public:
@@ -64,12 +66,18 @@ public:
 	SkeletonData *readSkeletonDataFile(const String &path);
 
 	SkeletonData *readSkeletonData(const char *json);
-
+    
+    bool readAttachment(SkeletonData *skeletonData, Json *skinMap, Skin *skin);
+    
+    bool readSkinData(SkeletonData *skeletonData, Json *skinData, const String& customSkinName);
+    
 	void setScale(float scale) { _scale = scale; }
 
 	String &getError() { return _error; }
 
     void readVertices(Json *attachmentMap, VertexAttachment *attachment, size_t verticesLength);
+    
+    Attachment* createAttachmet(Json *attachmentMap, Skin *skin, const String& attachmentName, const String& attachmentPath);
     
 private:
 	AttachmentLoader *_attachmentLoader;
@@ -79,7 +87,6 @@ private:
 	String _error;
 
 	static float toColor(const char *value, size_t index);
-
 	static void readCurve(Json *frame, CurveTimeline *timeline, size_t frameIndex);
 
 	Animation *readAnimation(Json *root, SkeletonData *skeletonData);
