@@ -204,7 +204,7 @@ std::pair<void*, DisplayType> BaseFactory::_getSlotDisplay(const BuildArmaturePa
         {
             if (pair.second == displayData->parent->parent->parent)
             {
-                dataName = pair.first;
+                dataName = pair.second->name;
             }
         }
 
