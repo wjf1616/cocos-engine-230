@@ -99,8 +99,6 @@ public:
 
 	void setBlendMode(BlendMode inValue);
 
-    Skin* getCustomSkin();
-    void removeCustomSkin();
 private:
 	const int _index;
 	String _name;
@@ -111,8 +109,6 @@ private:
 	bool _hasDarkColor;
 	String _attachmentName;
 	BlendMode _blendMode;
-    
-    Skin* _customSkin;
 };
 }
 

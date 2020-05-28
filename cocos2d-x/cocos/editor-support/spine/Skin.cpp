@@ -275,9 +275,11 @@ Attachment* Skin::getAttachmentByCache (const String &name)
     Skin::AttachmentMap::Entries entries = _attachments.getEntries();
     while (entries.hasNext()) {
         Skin::AttachmentMap::Entry &entry = entries.next();
-        slotIndex = entry._slotIndex;
-        attachmentName = entry._name;
-        break;
+        if (entry._cacheName == name) {
+            slotIndex = entry._slotIndex;
+            attachmentName = entry._name;
+            break;
+        }
     }
     
     if (slotIndex == -1 && attachmentName.isEmpty()) {
@@ -296,9 +298,12 @@ void Skin::activateAttachmentByCache(const String &name)
     Skin::AttachmentMap::Entries entries = _attachments.getEntries();
     while (entries.hasNext()) {
         Skin::AttachmentMap::Entry &entry = entries.next();
-        slotIndex = entry._slotIndex;
-        attachmentName = entry._name;
-        break;
+        if (entry._cacheName == name) {
+            slotIndex = entry._slotIndex;
+            attachmentName = entry._name;
+            break;
+        }
+        
     }
     
     if (slotIndex == -1 && attachmentName.isEmpty()) {

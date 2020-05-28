@@ -225,6 +225,7 @@ private:
 	Vector<Updatable *> _updateCache;
 	Vector<Bone *> _updateCacheReset;
 	Skin *_skin;
+    Skin *_customSkin;
 	Color _color;
 	float _time;
 	float _scaleX, _scaleY;

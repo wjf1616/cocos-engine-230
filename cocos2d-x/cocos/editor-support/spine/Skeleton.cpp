@@ -60,6 +60,7 @@ using namespace spine;
 Skeleton::Skeleton(SkeletonData *skeletonData) :
 		_data(skeletonData),
 		_skin(NULL),
+        _customSkin(NULL),
 		_color(1, 1, 1, 1),
 		_time(0),
 		_scaleX(1),
@@ -354,16 +355,10 @@ Attachment *Skeleton::getAttachment(int slotIndex, const String &attachmentName)
 	assert(attachmentName.length() > 0);
     
     //先从自定义skin中查找
-    if (slotIndex < _slots.size() && slotIndex >= 0) {
-        Slot* pSlot = _slots[slotIndex];
-        if (pSlot) {
-            Skin* customSkin = pSlot->getData().getCustomSkin();
-            if (customSkin != NULL) {
-                Attachment *attachment = customSkin->getAttachment(slotIndex, attachmentName);
-                if (attachment != NULL) {
-                    return attachment;
-                }
-            }
+    if (_customSkin != NULL) {
+        Attachment *attachment = _customSkin->getAttachment(slotIndex, attachmentName);
+        if (attachment != NULL) {
+            return attachment;
         }
     }
     
@@ -533,33 +528,20 @@ Skin *Skeleton::getSkin() {
 
 Skin *Skeleton::getCustomSkin(const char* partName)
 {
-    for (size_t i = 0, n = _slots.size(); i < n; ++i)
-    {
-        Slot *pSlot = _slots[i];
-        if (pSlot) {
-            auto attachment = pSlot->getAttachment();
-            if (attachment) {
-                if (attachment->getName() == partName) {
-                    return pSlot->getData().getCustomSkin();
-                }
-            }
-        }
+    if (_customSkin == nullptr) {
+        _customSkin = new (__FILE__, __LINE__) Skin("CustomSkin");
     }
     
-    return nullptr;
+    return _customSkin;
 }
 
 void Skeleton::removeCustomSkin()
 {
-    for (size_t i = 0, n = _slots.size(); i < n; ++i)
-    {
-        Slot *pSlot = _slots[i];
-        if (pSlot) {
-            auto attachment = pSlot->getAttachment();
-            if (attachment) {
-                pSlot->getData().removeCustomSkin();
-            }
-        }
+    if (_customSkin != nullptr) {
+        _customSkin->removeAttachmentByCache();
+        
+        delete _customSkin;
+        _customSkin = nullptr;
     }
 }
 

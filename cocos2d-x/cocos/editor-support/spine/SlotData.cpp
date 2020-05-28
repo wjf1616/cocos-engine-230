@@ -45,8 +45,7 @@ SlotData::SlotData(int index, const String &name, BoneData &boneData) :
 		_darkColor(0, 0, 0, 0),
 		_hasDarkColor(false),
 		_attachmentName(),
-		_blendMode(BlendMode_Normal),
-        _customSkin(nullptr)
+		_blendMode(BlendMode_Normal)
 {
 	assert(_index >= 0);
 	assert(_name.length() > 0);
@@ -101,21 +100,3 @@ void SlotData::setBlendMode(BlendMode inValue) {
 	_blendMode = inValue;
 }
 
-Skin* SlotData::getCustomSkin()
-{
-    if (_customSkin == nullptr) {
-        _customSkin = new (__FILE__, __LINE__) Skin("CustomSkin");
-    }
-    
-    return _customSkin;
-}
-
-void SlotData::removeCustomSkin()
-{
-    if (_customSkin != nullptr) {
-        _customSkin->removeAttachmentByCache();
-        
-        delete _customSkin;
-        _customSkin = nullptr;
-    }
-}
